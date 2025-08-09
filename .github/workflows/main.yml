@@ -32,13 +32,13 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    env:
-      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
     steps:
       - uses: actions/checkout@v3
       
       - name: Check required secrets
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
           if [[ -z "$HEROKU_API_KEY" ]]; then
             echo "❌ HEROKU_API_KEY secret is not configured"
@@ -57,14 +57,21 @@ jobs:
           curl https://cli-assets.heroku.com/install.sh | sh
           
       - name: Login to Heroku Container Registry
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          export HEROKU_API_KEY=${{ secrets.HEROKU_API_KEY }}
           heroku container:login
           
       - name: Build and Push Docker image
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
           heroku container:push web --app $HEROKU_APP_NAME
           
       - name: Release to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
           heroku container:release web --app $HEROKU_APP_NAME
