@@ -1,0 +1,34 @@
+openapi: 3.0.0
+info:
+  title: Auth Gateway
+  version: 1.0.0
+paths:
+  /auth/login:
+    post:
+      summary: Login via provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                  enum: [google, azure]
+                credentials:
+                  type: object
+      responses:
+        '200':
+          description: jwt token
+  /auth/validate:
+    get:
+      summary: Validate a token
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+      responses:
+        '200':
+          description: valid
