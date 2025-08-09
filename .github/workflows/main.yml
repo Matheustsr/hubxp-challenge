@@ -13,7 +13,7 @@ jobs:
         image: redis:7
         ports: ['6379:6379']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,7 +36,21 @@ jobs:
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
+      
+      - name: Check required secrets
+        run: |
+          if [[ -z "$HEROKU_API_KEY" ]]; then
+            echo "❌ HEROKU_API_KEY secret is not configured"
+            echo "Please configure it in: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [[ -z "$HEROKU_APP_NAME" ]]; then
+            echo "❌ HEROKU_APP_NAME secret is not configured"
+            echo "Please configure it in: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "✅ All required secrets are configured"
       
       - name: Install Heroku CLI
         run: |
@@ -44,7 +58,7 @@ jobs:
           
       - name: Login to Heroku Container Registry
         run: |
-          echo $HEROKU_API_KEY | heroku auth:token
+          export HEROKU_API_KEY=${{ secrets.HEROKU_API_KEY }}
           heroku container:login
           
       - name: Build and Push Docker image
