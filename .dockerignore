@@ -2,13 +2,15 @@ node_modules
 npm-debug.log
 coverage
 tests
+*.test.ts
 .git
 .gitignore
 README.md
+DEPLOY.md
 .env
 .nyc_output
 .vscode
 .github
 jest.config.js
-tsconfig.json
 newrelic_agent.log
+dist

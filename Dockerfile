@@ -1,8 +1,24 @@
 FROM node:20-alpine
+
 WORKDIR /usr/src/app
+
+# Copiar package files primeiro para aproveitar cache do Docker
 COPY package*.json ./
-RUN npm ci --only=production
+
+# Instalar todas as dependências (incluindo devDependencies para build)
+RUN npm ci
+
+# Copiar código fonte
 COPY . .
+
+# Build da aplicação
 RUN npm run build
-EXPOSE 3000
-CMD ["node","dist/server.js"]
+
+# Remover devDependencies após build
+RUN npm prune --production
+
+# Usar porta dinâmica do Heroku
+EXPOSE $PORT
+
+# Comando para iniciar a aplicação
+CMD ["npm", "start"]
