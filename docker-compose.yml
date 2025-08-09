@@ -4,7 +4,7 @@ services:
     build: .
     environment:
       - REDIS_HOST=redis
-      - JWT_SECRET=naotivenadaemmenteparapensar
+      - JWT_SECRET=alterar-isso-em-prod
     ports:
       - "3000:3000"
     depends_on:
