@@ -2,25 +2,96 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Auth Gateway",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "Authentication gateway supporting Google and Azure providers"
   },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
   "paths": {
     "/auth/login": {
       "post": {
         "summary": "Login via provider",
+        "description": "Authenticate using Google token or Azure credentials",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": ["provider", "credentials"],
                 "properties": {
                   "provider": {
                     "type": "string",
-                    "enum": ["google", "azure"]
+                    "enum": ["google", "azure"],
+                    "description": "Authentication provider"
                   },
                   "credentials": {
-                    "type": "object"
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "title": "Google Credentials",
+                        "required": ["token"],
+                        "properties": {
+                          "token": {
+                            "type": "string",
+                            "description": "Google OAuth token",
+                            "example": "google_valid_token_123"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "title": "Azure Credentials",
+                        "required": ["username", "password"],
+                        "properties": {
+                          "username": {
+                            "type": "string",
+                            "description": "Azure username",
+                            "example": "john.doe"
+                          },
+                          "password": {
+                            "type": "string",
+                            "description": "Azure password",
+                            "example": "Test@123"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "google_login": {
+                  "summary": "Google login example",
+                  "value": {
+                    "provider": "google",
+                    "credentials": {
+                      "token": "google_valid_token_123"
+                    }
+                  }
+                },
+                "azure_user_login": {
+                  "summary": "Azure user login example",
+                  "value": {
+                    "provider": "azure",
+                    "credentials": {
+                      "username": "john.doe",
+                      "password": "Test@123"
+                    }
+                  }
+                },
+                "azure_admin_login": {
+                  "summary": "Azure admin login example",
+                  "value": {
+                    "provider": "azure",
+                    "credentials": {
+                      "username": "admin",
+                      "password": "Admin@123"
+                    }
                   }
                 }
               }
@@ -29,28 +100,203 @@
         },
         "responses": {
           "200": {
-            "description": "jwt token"
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "JWT token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "enum": ["provider and credentials required", "unsupported provider"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "invalid_credentials"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
     "/auth/validate": {
       "get": {
-        "summary": "Validate a token",
+        "summary": "Validate a JWT token",
+        "description": "Validates a JWT token and returns the payload if valid",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "in": "header",
             "name": "Authorization",
+            "required": true,
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "pattern": "^Bearer .+",
+              "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            },
+            "description": "JWT token with Bearer prefix"
           }
         ],
         "responses": {
           "200": {
-            "description": "valid"
+            "description": "Token is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {
+                        "sub": {
+                          "type": "string",
+                          "description": "Subject (user ID)"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": ["google", "azure"]
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": ["user", "admin"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is invalid or missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "enum": ["missing_token", "invalid_token"]
+                    }
+                  }
+                }
+              }
+            }
           }
         }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Returns the health status of the service",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Prometheus metrics",
+        "description": "Returns application metrics in Prometheus format",
+        "responses": {
+          "200": {
+            "description": "Metrics data",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "# HELP nodejs_version_info Node.js version info\n# TYPE nodejs_version_info gauge\nnodejs_version_info{version=\"v18.17.0\",major=\"18\",minor=\"17\",patch=\"0\"} 1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "summary": "API Documentation",
+        "description": "Swagger UI for API documentation",
+        "responses": {
+          "200": {
+            "description": "Swagger UI HTML page",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   }
