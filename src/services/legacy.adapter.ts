@@ -27,7 +27,7 @@ export async function callLegacySystem(payload: any, idempotencyKey?: string) {
       return result;
     } catch (err) {
       if (attempt > maxRetries) {
-        logger.error({ event: 'legacy_failed', attempt, err: err.message });
+        logger.error({ event: 'legacy_failed', attempt, err: (err as Error).message });
         throw err;
       }
       const waitMs = backoff(attempt);
