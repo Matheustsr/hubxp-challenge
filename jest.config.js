@@ -11,5 +11,7 @@ module.exports = {
       lines: 70,
       statements: 70
     }
-  }
+  },
+  forceExit: true,
+  detectOpenHandles: false
 };
