@@ -20,6 +20,13 @@ Repositório gerado para o teste técnico. Inclui:
 docker-compose up --build
 ```
 
+## Rodando testes de carga com k6
+Para rodar testes de carga, instale o k6 e execute o seguinte comando:
+
+```bash
+k6 run load-test.js
+```
+
 3. Acesse a aplicação em `http://localhost:3000`
 
 ## Endpoints Disponíveis
