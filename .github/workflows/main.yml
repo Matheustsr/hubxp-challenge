@@ -76,6 +76,14 @@ jobs:
         run: |
           heroku container:login
           
+      - name: Configure Heroku app for Container deployment
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+        run: |
+          echo "Setting stack to container for Docker deployment..."
+          heroku stack:set container --app $HEROKU_APP_NAME
+          
       - name: Build and Push Docker image
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
