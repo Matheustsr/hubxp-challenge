@@ -35,48 +35,40 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Debug secrets (masked output)
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
-        run: |
-          echo "HEROKU_API_KEY length: ${#HEROKU_API_KEY}"
-          echo "HEROKU_APP_NAME: $HEROKU_APP_NAME"
-          echo "HEROKU_API_KEY starts with: ${HEROKU_API_KEY:0:8}..."
-      
       - name: Check required secrets
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          echo "Checking secrets availability..."
+          echo "Checking secrets..."
           
-          # Check if secrets are properly set
-          if [[ -z "$HEROKU_API_KEY" ]] || [[ "$HEROKU_API_KEY" == "" ]]; then
-            echo "❌ HEROKU_API_KEY secret is missing or empty"
-            echo "Configured secrets in GitHub:"
-            echo "- Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "- Add secret: HEROKU_API_KEY (your Heroku API key)"
-            echo "- Add secret: HEROKU_APP_NAME (your Heroku app name)"
+          # Simple validation without complex logic
+          if [ "${#HEROKU_API_KEY}" -lt 10 ]; then
+            echo "❌ HEROKU_API_KEY appears to be invalid or empty"
+            echo "Current length: ${#HEROKU_API_KEY}"
             exit 1
           fi
           
-          if [[ -z "$HEROKU_APP_NAME" ]] || [[ "$HEROKU_APP_NAME" == "" ]]; then
-            echo "❌ HEROKU_APP_NAME secret is missing or empty"
-            echo "Configured secrets in GitHub:"
-            echo "- Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "- Add secret: HEROKU_API_KEY (your Heroku API key)"
-            echo "- Add secret: HEROKU_APP_NAME (your Heroku app name)"
+          if [ "${#HEROKU_APP_NAME}" -lt 3 ]; then
+            echo "❌ HEROKU_APP_NAME appears to be invalid or empty"
+            echo "Current length: ${#HEROKU_APP_NAME}"
             exit 1
           fi
           
-          echo "✅ All required secrets are configured"
-          echo "✅ HEROKU_API_KEY length: ${#HEROKU_API_KEY} characters"
+          echo "✅ All secrets appear to be configured correctly"
+          echo "✅ HEROKU_API_KEY length: ${#HEROKU_API_KEY}"
           echo "✅ HEROKU_APP_NAME: $HEROKU_APP_NAME"
       
       - name: Install Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
+          
+      - name: Test Heroku Authentication
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Testing Heroku authentication..."
+          heroku auth:whoami || echo "Authentication failed"
           
       - name: Login to Heroku Container Registry
         env:
