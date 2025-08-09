@@ -49,17 +49,30 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          if [[ -z "$HEROKU_API_KEY" ]]; then
-            echo "❌ HEROKU_API_KEY secret is not configured"
-            echo "Please configure it in: Settings → Secrets and variables → Actions"
+          echo "Checking secrets availability..."
+          
+          # Check if secrets are properly set
+          if [[ -z "$HEROKU_API_KEY" ]] || [[ "$HEROKU_API_KEY" == "" ]]; then
+            echo "❌ HEROKU_API_KEY secret is missing or empty"
+            echo "Configured secrets in GitHub:"
+            echo "- Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "- Add secret: HEROKU_API_KEY (your Heroku API key)"
+            echo "- Add secret: HEROKU_APP_NAME (your Heroku app name)"
             exit 1
           fi
-          if [[ -z "$HEROKU_APP_NAME" ]]; then
-            echo "❌ HEROKU_APP_NAME secret is not configured"
-            echo "Please configure it in: Settings → Secrets and variables → Actions"
+          
+          if [[ -z "$HEROKU_APP_NAME" ]] || [[ "$HEROKU_APP_NAME" == "" ]]; then
+            echo "❌ HEROKU_APP_NAME secret is missing or empty"
+            echo "Configured secrets in GitHub:"
+            echo "- Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "- Add secret: HEROKU_API_KEY (your Heroku API key)"
+            echo "- Add secret: HEROKU_APP_NAME (your Heroku app name)"
             exit 1
           fi
+          
           echo "✅ All required secrets are configured"
+          echo "✅ HEROKU_API_KEY length: ${#HEROKU_API_KEY} characters"
+          echo "✅ HEROKU_APP_NAME: $HEROKU_APP_NAME"
       
       - name: Install Heroku CLI
         run: |
