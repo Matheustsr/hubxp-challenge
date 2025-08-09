@@ -255,16 +255,15 @@
     },
     "/metrics": {
       "get": {
-        "summary": "Prometheus metrics",
-        "description": "Returns application metrics in Prometheus format",
+        "summary": "Grafana metrics",
+        "description": "Returns application metrics in Grafana format",
         "responses": {
           "200": {
             "description": "Metrics data",
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "string",
-                  "example": "# HELP nodejs_version_info Node.js version info\n# TYPE nodejs_version_info gauge\nnodejs_version_info{version=\"v18.17.0\",major=\"18\",minor=\"17\",patch=\"0\"} 1"
+                  "type": "string"
                 }
               }
             }
