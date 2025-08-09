@@ -3,6 +3,8 @@ import config from '../config';
 
 export const redis = new Redis({
   host: config.redis.host,
+  username: config.redis.username,
+  password: config.redis.password,
   port: config.redis.port,
 });
 
