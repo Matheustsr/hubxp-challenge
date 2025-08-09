@@ -35,6 +35,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - name: Debug secrets (masked output)
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+        run: |
+          echo "HEROKU_API_KEY length: ${#HEROKU_API_KEY}"
+          echo "HEROKU_APP_NAME: $HEROKU_APP_NAME"
+          echo "HEROKU_API_KEY starts with: ${HEROKU_API_KEY:0:8}..."
+      
       - name: Check required secrets
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
