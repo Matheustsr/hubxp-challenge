@@ -1,0 +1,54 @@
+{
+  "name": "HubXP Challenge",
+  "description": "Authentication service with OAuth integration",
+  "website": "https://github.com/Matheustsr/hubxp-challenge",
+  "repository": "https://github.com/Matheustsr/hubxp-challenge",
+  "logo": "",
+  "success_url": "/",
+  "keywords": ["node", "express", "oauth", "redis", "jwt"],
+  "image": "heroku/nodejs",
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-redis:mini"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "PORT": {
+      "description": "Port for the app",
+      "value": "3000"
+    },
+    "JWT_SECRET": {
+      "description": "Secret for JWT tokens",
+      "generator": "secret"
+    }
+  },
+  "environments": {
+    "test": {
+      "addons": ["heroku-redis:mini"],
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "scripts": {
+        "test": "npm test"
+      }
+    }
+  },
+  "scripts": {
+    "postdeploy": "echo 'Deploy completed successfully'"
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
