@@ -162,33 +162,11 @@ jobs:
           echo "Testing authentication..."
           heroku auth:whoami
           
-      - name: Configure Heroku app for Container deployment
+      - name: Deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          echo "Setting stack to container for Docker deployment..."
-          heroku stack:set container --app $HEROKU_APP_NAME
-          
-      - name: Login to Heroku Container Registry
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          echo "Logging into Heroku Container Registry..."
-          heroku container:login
-          
-      - name: Build and Push Docker image
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
-        run: |
-          echo "Building and pushing Docker image to Heroku..."
-          heroku container:push web --app $HEROKU_APP_NAME
-          
-      - name: Release to Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
-        run: |
-          echo "Releasing container to Heroku..."
-          heroku container:release web --app $HEROKU_APP_NAME
+          echo "Deploying to Heroku using heroku.yml..."
+          git remote add heroku https://git.heroku.com/$HEROKU_APP_NAME.git
+          git push heroku main
