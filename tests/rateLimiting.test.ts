@@ -1,15 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
-import { redis } from '../src/infra/redisClient';
 
 describe('Rate Limiting e Circuit Breaker', () => {
-  afterAll(async () => {
-    try {
-      await redis.disconnect();
-    } catch (error) {
-      // Ignorar erros de conexão durante limpeza
-    }
-  }, 10000);
 
   beforeEach(async () => {
     // Aguardar reset do rate limiter

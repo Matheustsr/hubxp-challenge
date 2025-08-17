@@ -1,15 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
-import { redis } from '../src/infra/redisClient';
 
 describe('Autenticação Google', () => {
-  afterAll(async () => {
-    try {
-      await redis.disconnect();
-    } catch (error) {
-      // Ignorar erros de conexão durante limpeza
-    }
-  }, 10000);
 
   it('deve fazer login com token Google válido', async () => {
     const res = await request(app)

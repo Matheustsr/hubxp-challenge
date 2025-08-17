@@ -4,14 +4,28 @@ import { logger } from '../logs/logger';
 import { featureFlags } from '../config/featureFlags';
 import { circuitBreakerStateGauge } from '../metrics/businessMetrics';
 
-export function createBreaker(
-  fn: (...args: any[]) => Promise<any>,
+// Interface básica para circuit breakers
+interface CircuitBreaker {
+  opened?: boolean;
+  close?: () => void;
+  stats?: {
+    failures: number;
+    successes: number;
+    fires: number;
+  };
+}
+
+// Array para armazenar instâncias dos circuit breakers
+const circuitBreakers: CircuitBreaker[] = [];
+
+export function createBreaker<TArgs extends unknown[], TReturn>(
+  fn: (...args: TArgs) => Promise<TReturn>,
   name = 'breaker'
 ) {
   // Se feature flag estiver desabilitada, retorna uma função que apenas executa o original
   if (!featureFlags.isEnabled('FF_CIRCUIT_BREAKER')) {
     logger.info({ event: 'circuit_breaker_disabled', name });
-    return {
+    const mockBreaker = {
       fire: fn,
       on: () => {},
       stats: {
@@ -32,6 +46,8 @@ export function createBreaker(
         isCircuitBreakerOpen: false,
       },
     };
+    circuitBreakers.push(mockBreaker);
+    return mockBreaker;
   }
 
   const breaker = new opossum(fn, {
@@ -39,6 +55,9 @@ export function createBreaker(
     errorThresholdPercentage: config.circuitBreaker.errorThresholdPercentage,
     resetTimeout: config.circuitBreaker.resetTimeout,
   });
+
+  // Adicionar à lista de circuit breakers
+  circuitBreakers.push(breaker);
 
   // Atualizar métricas de estado do circuit breaker
   const updateStateMetric = (state: 'open' | 'halfOpen' | 'close') => {
@@ -70,5 +89,27 @@ export function createBreaker(
   // Inicializar métrica como fechado
   updateStateMetric('close');
 
+  // Adicionar ao store de circuit breakers
+  circuitBreakers.push(breaker);
+
   return breaker;
+}
+
+// Função para resetar todos os circuit breakers
+export function resetCircuitBreakers() {
+  circuitBreakers.forEach((breaker) => {
+    try {
+      if (breaker.opened) {
+        breaker.close?.();
+      }
+      // Limpar estatísticas se possível
+      if (breaker.stats) {
+        breaker.stats.failures = 0;
+        breaker.stats.successes = 0;
+        breaker.stats.fires = 0;
+      }
+    } catch (error) {
+      // Ignorar erros de reset
+    }
+  });
 }

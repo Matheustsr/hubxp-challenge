@@ -21,6 +21,16 @@ import {
   AzureLoginSchema,
 } from '../schemas/auth.schemas';
 
+// Tipos para os usuários autenticados
+interface AuthenticatedUser {
+  id?: string;
+  username?: string;
+  email?: string;
+  name?: string;
+  role?: string;
+  provider: string;
+}
+
 const googleBreaker = createBreaker(validateGoogleToken, 'google');
 const azureBreaker = createBreaker(validateAzureCredentials, 'azure');
 
@@ -38,18 +48,18 @@ export async function login(req: Request, res: Response) {
   }
 
   try {
-    let user;
+    let user: AuthenticatedUser;
     if (provider === 'google') {
       // Validação específica para Google
       const googleData = GoogleLoginSchema.parse({ provider, credentials });
-      user = await googleBreaker.fire(googleData.credentials.token);
+      user = await googleBreaker.fire(googleData.credentials.token) as AuthenticatedUser;
     } else if (provider === 'azure') {
       // Validação específica para Azure
       const azureData = AzureLoginSchema.parse({ provider, credentials });
       user = await azureBreaker.fire(
         azureData.credentials.username,
         azureData.credentials.password
-      );
+      ) as AuthenticatedUser;
     } else {
       // Este caso não deveria acontecer devido à validação do middleware
       if (featureFlags.isEnabled('FF_METRICS')) {
@@ -68,7 +78,7 @@ export async function login(req: Request, res: Response) {
     }
 
     const payload = {
-      sub: user.id || user.username,
+      sub: user.id || user.username || user.email || 'unknown',
       provider: user.provider || provider,
       role: user.role || 'user',
     };
@@ -84,7 +94,7 @@ export async function login(req: Request, res: Response) {
 
       logger.info({ event: 'login_success', provider, userId: payload.sub });
       return res.json({ token });
-    } catch (jwtError: any) {
+    } catch (jwtError: unknown) {
       if (featureFlags.isEnabled('FF_METRICS')) {
         authFailTotal.inc({ provider, reason: 'jwt_generation_failed' });
       }
@@ -92,21 +102,21 @@ export async function login(req: Request, res: Response) {
       logger.error({
         event: 'jwt_generation_failed',
         provider,
-        error: jwtError.message,
+        error: (jwtError as Error).message,
       });
       return res.status(500).json({
         error: 'token_generation_failed',
         message: 'Falha na geração do token de acesso',
       });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Incrementar métricas de falha
     if (featureFlags.isEnabled('FF_METRICS')) {
       authFailTotal.inc({ provider, reason: 'invalid_credentials' });
       authAttemptsTotal.inc({ provider, status: 'failed' });
     }
 
-    logger.warn({ event: 'login_failed', provider, reason: err.message });
+    logger.warn({ event: 'login_failed', provider, reason: (err as Error).message });
     return res.status(401).json({
       error: 'invalid_credentials',
       message: 'Credenciais inválidas',
@@ -147,16 +157,17 @@ export async function validate(req: Request, res: Response) {
     }
 
     return res.json({ valid: true, payload });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errMessage = (err as Error).message;
     const isExpired =
-      err.message.includes('expired') || err.message.includes('jwt expired');
+      errMessage.includes('expired') || errMessage.includes('jwt expired');
     const status = isExpired ? 'expired' : 'invalid';
 
     if (featureFlags.isEnabled('FF_METRICS')) {
       tokenValidationTotal.inc({ status });
     }
 
-    logger.debug({ event: 'token_validation_failed', reason: err.message });
+    logger.debug({ event: 'token_validation_failed', reason: errMessage });
     return res.status(401).json({
       valid: false,
       error: 'invalid_token',
@@ -193,8 +204,8 @@ export async function logout(req: Request, res: Response) {
       token_prefix: token.substring(0, 10) + '...',
     });
     return res.json({ message: 'Token revogado com sucesso' });
-  } catch (err: any) {
-    logger.warn({ event: 'logout_failed', reason: err.message });
+  } catch (err: unknown) {
+    logger.warn({ event: 'logout_failed', reason: (err as Error).message });
     return res.status(400).json({
       error: 'revocation_failed',
       message: 'Falha ao revogar o token',

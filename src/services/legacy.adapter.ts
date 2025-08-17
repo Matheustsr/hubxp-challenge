@@ -3,7 +3,7 @@ import { logger } from '../logs/logger';
 import { redis } from '../infra/redisClient';
 import { backoff } from '../utils/retryBackoff';
 
-export async function callLegacySystem(payload: any, idempotencyKey?: string) {
+export async function callLegacySystem(payload: unknown, idempotencyKey?: string) {
   if (idempotencyKey) {
     const cached = await redis.get(`idem:${idempotencyKey}`);
     if (cached) {
@@ -23,6 +23,8 @@ export async function callLegacySystem(payload: any, idempotencyKey?: string) {
    */
   const maxRetries = 4;
   let attempt = 0;
+  let lastError: Error | undefined;
+  
   while (attempt < maxRetries) {
     try {
       attempt++;
@@ -37,16 +39,17 @@ export async function callLegacySystem(payload: any, idempotencyKey?: string) {
         );
       }
       return result;
-    } catch (err: any) {
+    } catch (err: unknown) {
+      lastError = err as Error;
       const isRetryableError = shouldRetry(err);
 
-      if (attempt > maxRetries || !isRetryableError) {
+      if (attempt >= maxRetries || !isRetryableError) {
         logger.error({
           event: 'legacy_failed',
           attempt,
-          statusCode: err.response?.status,
+          statusCode: (err as any).response?.status,
           isRetryable: isRetryableError,
-          err: err.message,
+          err: (err as Error).message,
         });
         throw err;
       }
@@ -55,25 +58,28 @@ export async function callLegacySystem(payload: any, idempotencyKey?: string) {
       logger.warn({
         event: 'legacy_retry',
         attempt,
-        statusCode: err.response?.status,
+        statusCode: (err as any).response?.status,
         waitMs,
       });
       await new Promise(r => setTimeout(r, waitMs));
     }
   }
+  
+  // Se chegou aqui, esgotou tentativas sem sucesso
+  throw lastError || new Error('Max retries exceeded');
 }
 
 /**
  * Determina se um erro deve ser reantado.
  * Retenta apenas erros transitórios (5xx/network), nunca 4xx.
  */
-function shouldRetry(err: any): boolean {
+function shouldRetry(err: unknown): boolean {
   // Erros de rede (sem resposta HTTP)
-  if (!err.response) {
+  if (!(err as any).response) {
     return true;
   }
 
-  const statusCode = err.response.status;
+  const statusCode = (err as any).response.status;
 
   // 4xx são erros do cliente - não retentar
   if (statusCode >= 400 && statusCode < 500) {

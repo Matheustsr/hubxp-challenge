@@ -115,6 +115,6 @@ describe('Adaptador Sistema Legado', () => {
     const payload = { operation: 'test' };
 
     await expect(callLegacySystem(payload)).rejects.toThrow('Persistent error');
-    expect(mockedAxios.post).toHaveBeenCalledTimes(5); // maxRetries + 1 = 5
+    expect(mockedAxios.post).toHaveBeenCalledTimes(4); // maxRetries = 4
   }, 20000);
 });

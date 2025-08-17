@@ -1,15 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
-import { redis } from '../src/infra/redisClient';
 
 describe('Health e Métricas', () => {
-  afterAll(async () => {
-    try {
-      await redis.disconnect();
-    } catch (error) {
-      // Ignorar erros de conexão durante limpeza
-    }
-  }, 10000);
 
   describe('Endpoint de health', () => {
     it('deve retornar status de saúde da aplicação', async () => {
@@ -17,7 +9,7 @@ describe('Health e Métricas', () => {
 
       expect(res.status).toBe(200);
       // Aceitar tanto "healthy" quanto "degraded" pois Redis pode não estar rodando nos testes
-      expect(['healthy', 'degraded']).toContain(res.body.status);
+      expect(res.body.status).toMatch(/^(healthy|degraded)$/);
       expect(res.body.redis).toBeDefined();
       expect(res.body.feature_flags).toBeDefined();
     }, 15000); // Timeout de 15 segundos
