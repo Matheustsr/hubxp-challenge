@@ -1,6 +1,6 @@
 // Configurar environment variables antes de qualquer import/mock
 process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'super-secret-jwt-key-for-testing-only-32-chars';
+process.env.JWT_SECRET = 'hub-xp-test-secret';
 
 import request from 'supertest';
 import app from '../src/app';
@@ -9,7 +9,7 @@ import app from '../src/app';
 jest.mock('../src/services/jwt.service', () => {
   const jwt = require('jsonwebtoken');
   const { randomBytes } = require('crypto');
-  const TEST_SECRET = 'super-secret-jwt-key-for-testing-only-32-chars';
+  const TEST_SECRET = 'hub-xp-test-secret';
   
   return {
     signJwt: jest.fn((payload: any) => {

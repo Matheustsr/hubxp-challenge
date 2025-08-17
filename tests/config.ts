@@ -1,6 +1,6 @@
 // Configuração para testes - deve ser importado primeiro
 process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'super-secret-jwt-key-for-testing-only-32-chars';
+process.env.JWT_SECRET = 'hub-xp-test-secret';
 process.env.REDIS_HOST = 'localhost';
 process.env.REDIS_PORT = '6379';
 process.env.PORT = '3001';
