@@ -190,5 +190,4 @@ jobs:
         env:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          APP_URL="$HEROKU_APP_DEFAULT_DOMAIN_NAME
-          echo "API URL: $APP_URL"
+          echo "API URL: https://$HEROKU_APP_DEFAULT_DOMAIN_NAME"
