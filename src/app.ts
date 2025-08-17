@@ -62,7 +62,7 @@ app.get('/health', async (req, res) => {
       status: overallStatus,
       redis: redisHealthy,
       legacy: legacyHealthy,
-      featureFlags: featureFlags.getAll(),
+      feature_flags: featureFlags.getAll(),
       timestamp: new Date().toISOString()
     })
   } catch (error) {
@@ -71,7 +71,7 @@ app.get('/health', async (req, res) => {
       status: 'error',
       redis: false,
       legacy: false,
-      featureFlags: featureFlags.getAll(),
+      feature_flags: featureFlags.getAll(),
       timestamp: new Date().toISOString()
     })
   }

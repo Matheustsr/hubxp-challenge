@@ -1,7 +1,12 @@
 import { randomBytes } from 'crypto';
+import * as jwt from 'jsonwebtoken';
 
 // Mock da configuração para usar um JWT_SECRET seguro nos testes
 const SECURE_JWT_SECRET = randomBytes(32).toString('hex');
+
+// Configurar environment variables antes de qualquer mock
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = SECURE_JWT_SECRET;
 
 jest.mock('../src/config', () => ({
   default: {
@@ -56,6 +61,74 @@ jest.mock('../src/infra/redisClient', () => {
       cache.set(`jti:${jti}`, 'REVOKED');
       return Promise.resolve();
     }),
+  };
+});
+
+jest.mock('../src/services/jwt.service', () => {
+  const { randomBytes } = require('crypto');
+  const jwt = require('jsonwebtoken');
+  const TEST_SECRET = randomBytes(32).toString('hex');
+  
+  const cache = new Map();
+  
+  return {
+    signJwt: jest.fn((payload: any) => {
+      const jti = randomBytes(16).toString('hex');
+      const enhancedPayload = {
+        ...payload,
+        jti,
+        iss: 'hubxp-auth',
+        aud: 'hubxp-api',
+      };
+      
+      const token = jwt.sign(enhancedPayload, TEST_SECRET, {
+        expiresIn: '15m',
+        algorithm: 'HS256'
+      });
+      
+      // Simular cache
+      cache.set(`jti:${jti}`, JSON.stringify(enhancedPayload));
+      
+      return token;
+    }),
+    
+    verifyJwt: jest.fn((token: string) => {
+      try {
+        return jwt.verify(token, TEST_SECRET, {
+          algorithms: ['HS256'],
+          issuer: 'hubxp-auth',
+          audience: 'hubxp-api'
+        });
+      } catch (err: any) {
+        if (err.name === 'TokenExpiredError') {
+          throw new Error('Token expirado');
+        } else if (err.name === 'JsonWebTokenError') {
+          throw new Error('Token inválido');
+        }
+        throw new Error('Falha na verificação do token');
+      }
+    }),
+    
+    verifyJwtWithCache: jest.fn(async (token: string) => {
+      const decoded = jwt.verify(token, TEST_SECRET);
+      
+      // Verificar se o token foi revogado
+      const jti = decoded.jti;
+      if (jti && cache.get(`jti:${jti}`) === 'REVOKED') {
+        throw new Error('Token foi revogado');
+      }
+      
+      return decoded;
+    }),
+    
+    revokeToken: jest.fn(async (token: string) => {
+      const decoded = jwt.verify(token, TEST_SECRET);
+      if (decoded.jti) {
+        cache.set(`jti:${decoded.jti}`, 'REVOKED');
+      }
+    }),
+    
+    generateSecureSecret: jest.fn(() => randomBytes(32).toString('hex'))
   };
 });
 

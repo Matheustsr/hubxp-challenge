@@ -34,7 +34,7 @@ describe('Autenticação Google', () => {
       .post('/auth/login')
       .send({ provider: 'google', credentials: {} });
 
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(400); // Bad Request por validação schema
   });
 
   it('deve rejeitar token Google com formato incorreto', async () => {
@@ -42,6 +42,6 @@ describe('Autenticação Google', () => {
       .post('/auth/login')
       .send({ provider: 'google', credentials: { token: '' } });
 
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(400); // Bad Request por validação schema
   });
 });

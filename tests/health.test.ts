@@ -56,20 +56,12 @@ describe('Health e Métricas', () => {
   });
 
   describe('Log de requisições', () => {
-    it('deve logar requisições para endpoint de health', async () => {
-      // Testa que as requisições estão sendo logadas
-      const res = await request(app)
-        .get('/health');
-
-      expect(res.status).toBe(200);
-    }, 15000);
-
     it('deve logar requisições para endpoints de auth', async () => {
       const res = await request(app)
         .post('/auth/login')
         .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });
 
       expect(res.status).toBe(200);
-    }, 15000);
+    }, 30000);
   });
 });

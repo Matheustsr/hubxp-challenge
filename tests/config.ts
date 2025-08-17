@@ -1,5 +1,4 @@
-// Setup global para testes
-// Configurar environment variables para testes ANTES de qualquer import
+// Configuração para testes - deve ser importado primeiro
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'super-secret-jwt-key-for-testing-only-32-chars';
 process.env.REDIS_HOST = 'localhost';
@@ -11,14 +10,3 @@ process.env.FF_CIRCUIT_BREAKER = 'true';
 process.env.FF_CACHE_TOKEN = 'true';
 process.env.FF_RATE_LIMITING = 'true';
 process.env.FF_METRICS = 'true';
-
-// Mock console methods para evitar spam nos testes
-global.console = {
-  ...console,
-  // Deixar log e error para debugging quando necessário
-  log: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  info: jest.fn(),
-  debug: jest.fn(),
-};
