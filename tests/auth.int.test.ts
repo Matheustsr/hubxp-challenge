@@ -1,15 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
-import { redis } from '../src/infra/redisClient';
 
 describe('Auth flows', () => {
-  afterAll(async () => {
-    try {
-      await redis.disconnect();
-    } catch (error) {
-      // Vamos ignorar erros de conexão durante a limpeza
-    }
-  }, 10000);
 
   it('should login with google mock token', async () => {
     const res = await request(app)

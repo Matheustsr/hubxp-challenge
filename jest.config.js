@@ -21,11 +21,12 @@ module.exports = {
   forceExit: true,
   detectOpenHandles: true,
   setupFiles: ['<rootDir>/tests/setup.ts'],
+  globalTeardown: '<rootDir>/tests/teardown.ts',
   testMatch: [
     '**/__tests__/**/*.ts',
     '**/?(*.)+(spec|test).ts'
   ],
-  moduleNameMapper: {
+  moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1'
   }
 };
