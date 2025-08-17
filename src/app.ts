@@ -10,6 +10,7 @@ import swaggerUi from 'swagger-ui-express';
 import openapi from '../openapi.json';
 
 const app = express();
+app.set('trust proxy', 1);  // para o rate limit identificar IPs corretamente.
 
 app.use(helmet());
 app.use(bodyParser.json());

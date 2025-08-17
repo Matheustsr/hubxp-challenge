@@ -25,14 +25,54 @@ export async function callLegacySystem(payload: any, idempotencyKey?: string) {
         await redis.set(`idem:${idempotencyKey}`, JSON.stringify(result), 'EX', 60 * 60);
       }
       return result;
-    } catch (err) {
-      if (attempt > maxRetries) {
-        logger.error({ event: 'legacy_failed', attempt, err: (err as Error).message });
+    } catch (err: any) {
+      const isRetryableError = shouldRetry(err);
+      
+      if (attempt > maxRetries || !isRetryableError) {
+        logger.error({ 
+          event: 'legacy_failed', 
+          attempt, 
+          statusCode: err.response?.status,
+          isRetryable: isRetryableError,
+          err: err.message 
+        });
         throw err;
       }
+      
       const waitMs = backoff(attempt);
-      logger.warn({ event: 'legacy_retry', attempt, waitMs });
+      logger.warn({ 
+        event: 'legacy_retry', 
+        attempt, 
+        statusCode: err.response?.status,
+        waitMs 
+      });
       await new Promise(r => setTimeout(r, waitMs));
     }
   }
+}
+
+/**
+ * Determina se um erro deve ser reantado.
+ * Retenta apenas erros transitórios (5xx/network), nunca 4xx.
+ */
+function shouldRetry(err: any): boolean {
+  // Erros de rede (sem resposta HTTP)
+  if (!err.response) {
+    return true;
+  }
+  
+  const statusCode = err.response.status;
+  
+  // 4xx são erros do cliente - não retentar
+  if (statusCode >= 400 && statusCode < 500) {
+    return false;
+  }
+  
+  // 5xx são erros do servidor - retentar
+  if (statusCode >= 500) {
+    return true;
+  }
+  
+  // Outros códigos não esperados - não retentar por segurança
+  return false;
 }
