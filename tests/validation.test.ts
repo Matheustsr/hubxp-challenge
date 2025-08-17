@@ -5,12 +5,12 @@ process.env.JWT_SECRET = 'hub-xp-test-secret';
 import request from 'supertest';
 import app from '../src/app';
 
-// Mock da função signJwt diretamente  
+// Mock da função signJwt diretamente
 jest.mock('../src/services/jwt.service', () => {
   const jwt = require('jsonwebtoken');
   const { randomBytes } = require('crypto');
   const TEST_SECRET = 'hub-xp-test-secret';
-  
+
   return {
     signJwt: jest.fn((payload: any) => {
       const jti = randomBytes(16).toString('hex');
@@ -20,24 +20,24 @@ jest.mock('../src/services/jwt.service', () => {
         iss: 'hubxp-auth',
         aud: 'hubxp-api',
       };
-      
+
       return jwt.sign(enhancedPayload, TEST_SECRET, {
         expiresIn: '15m',
-        algorithm: 'HS256'
+        algorithm: 'HS256',
       });
     }),
-    
+
     verifyJwt: jest.fn((token: string) => {
       return jwt.verify(token, TEST_SECRET, {
         algorithms: ['HS256'],
         issuer: 'hubxp-auth',
-        audience: 'hubxp-api'
+        audience: 'hubxp-api',
       });
     }),
-    
+
     verifyJwtWithCache: jest.fn(async (token: string) => {
       return jwt.verify(token, TEST_SECRET);
-    })
+    }),
   };
 });
 
@@ -47,14 +47,14 @@ import { signJwt } from '../src/services/jwt.service';
 jest.mock('../src/infra/redisClient', () => ({
   redis: {
     disconnect: jest.fn(),
-    ping: jest.fn().mockResolvedValue('PONG')
+    ping: jest.fn().mockResolvedValue('PONG'),
   },
   getCachedToken: jest.fn().mockResolvedValue(null),
   cacheToken: jest.fn().mockResolvedValue(true),
   cacheTokenByJti: jest.fn().mockResolvedValue(true),
   getCachedTokenByJti: jest.fn().mockResolvedValue(null),
   revokeTokenByJti: jest.fn().mockResolvedValue(true),
-  cleanupExpiredTokens: jest.fn().mockResolvedValue(true)
+  cleanupExpiredTokens: jest.fn().mockResolvedValue(true),
 }));
 
 describe('Validação de Token', () => {
@@ -96,8 +96,7 @@ describe('Validação de Token', () => {
   });
 
   it('deve rejeitar quando header Authorization está ausente', async () => {
-    const res = await request(app)
-      .get('/auth/validate');
+    const res = await request(app).get('/auth/validate');
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('missing_token');

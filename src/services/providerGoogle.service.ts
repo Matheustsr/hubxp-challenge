@@ -1,4 +1,3 @@
-
 export async function validateGoogleToken(token: string) {
   // dados de teste do enunciado
   if (token === 'google_valid_token_123') {
@@ -10,7 +9,7 @@ export async function validateGoogleToken(token: string) {
     };
   }
 
-  // latencia 
+  // latencia
   await new Promise(r => setTimeout(r, 50));
   throw new Error('Invalid Google token');
 }

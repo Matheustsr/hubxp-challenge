@@ -16,58 +16,78 @@ describe('Azure Authentication Provider', () => {
     it('should validate john.doe credentials', async () => {
       // Usa o serviço real, não o mock, para testar a implementação
       jest.unmock('../src/services/providerAzure.service');
-      const { validateAzureCredentials } = require('../src/services/providerAzure.service');
-      
+      const {
+        validateAzureCredentials,
+      } = require('../src/services/providerAzure.service');
+
       const result = await validateAzureCredentials('john.doe', 'Test@123');
-      
+
       expect(result).toEqual({
         id: 'azure-john',
         username: 'john.doe',
         role: 'user',
-        provider: 'azure'
+        provider: 'azure',
       });
     });
 
     it('should validate admin credentials', async () => {
       jest.unmock('../src/services/providerAzure.service');
-      const { validateAzureCredentials } = require('../src/services/providerAzure.service');
-      
+      const {
+        validateAzureCredentials,
+      } = require('../src/services/providerAzure.service');
+
       const result = await validateAzureCredentials('admin', 'Admin@123');
-      
+
       expect(result).toEqual({
         id: 'azure-admin',
         username: 'admin',
         role: 'admin',
-        provider: 'azure'
+        provider: 'azure',
       });
     });
 
     it('should throw error for invalid credentials', async () => {
       jest.unmock('../src/services/providerAzure.service');
-      const { validateAzureCredentials } = require('../src/services/providerAzure.service');
-      
-      await expect(validateAzureCredentials('invalid', 'wrong')).rejects.toThrow('Invalid username/password');
+      const {
+        validateAzureCredentials,
+      } = require('../src/services/providerAzure.service');
+
+      await expect(
+        validateAzureCredentials('invalid', 'wrong')
+      ).rejects.toThrow('Invalid username/password');
     });
 
     it('should throw error for wrong username', async () => {
       jest.unmock('../src/services/providerAzure.service');
-      const { validateAzureCredentials } = require('../src/services/providerAzure.service');
-      
-      await expect(validateAzureCredentials('wronguser', 'Test@123')).rejects.toThrow('Invalid username/password');
+      const {
+        validateAzureCredentials,
+      } = require('../src/services/providerAzure.service');
+
+      await expect(
+        validateAzureCredentials('wronguser', 'Test@123')
+      ).rejects.toThrow('Invalid username/password');
     });
 
     it('should throw error for wrong password', async () => {
       jest.unmock('../src/services/providerAzure.service');
-      const { validateAzureCredentials } = require('../src/services/providerAzure.service');
-      
-      await expect(validateAzureCredentials('john.doe', 'wrongpassword')).rejects.toThrow('Invalid username/password');
+      const {
+        validateAzureCredentials,
+      } = require('../src/services/providerAzure.service');
+
+      await expect(
+        validateAzureCredentials('john.doe', 'wrongpassword')
+      ).rejects.toThrow('Invalid username/password');
     });
 
     it('should handle empty credentials', async () => {
       jest.unmock('../src/services/providerAzure.service');
-      const { validateAzureCredentials } = require('../src/services/providerAzure.service');
-      
-      await expect(validateAzureCredentials('', '')).rejects.toThrow('Invalid username/password');
+      const {
+        validateAzureCredentials,
+      } = require('../src/services/providerAzure.service');
+
+      await expect(validateAzureCredentials('', '')).rejects.toThrow(
+        'Invalid username/password'
+      );
     });
   });
 
@@ -76,7 +96,7 @@ describe('Azure Authentication Provider', () => {
       .post('/auth/login')
       .send({
         provider: 'azure',
-        credentials: { username: 'john.doe', password: 'Test@123' }
+        credentials: { username: 'john.doe', password: 'Test@123' },
       });
 
     expect(response.status).toBe(200);
@@ -85,7 +105,7 @@ describe('Azure Authentication Provider', () => {
       id: 'azure-john',
       username: 'john.doe',
       role: 'user',
-      provider: 'azure'
+      provider: 'azure',
     });
   });
 
@@ -94,7 +114,7 @@ describe('Azure Authentication Provider', () => {
       .post('/auth/login')
       .send({
         provider: 'azure',
-        credentials: { username: 'admin', password: 'Admin@123' }
+        credentials: { username: 'admin', password: 'Admin@123' },
       });
 
     expect(response.status).toBe(200);
@@ -103,7 +123,7 @@ describe('Azure Authentication Provider', () => {
       id: 'azure-admin',
       username: 'admin',
       role: 'admin',
-      provider: 'azure'
+      provider: 'azure',
     });
   });
 
@@ -112,7 +132,7 @@ describe('Azure Authentication Provider', () => {
       .post('/auth/login')
       .send({
         provider: 'azure',
-        credentials: { username: 'invalid', password: 'wrong' }
+        credentials: { username: 'invalid', password: 'wrong' },
       });
 
     expect(response.status).toBe(401);
@@ -124,7 +144,7 @@ describe('Azure Authentication Provider', () => {
       .post('/auth/login')
       .send({
         provider: 'azure',
-        credentials: { invalid: 'structure' }
+        credentials: { invalid: 'structure' },
       });
 
     expect(response.status).toBe(400);
@@ -138,12 +158,12 @@ describe('Azure Authentication Provider', () => {
       .post('/auth/login')
       .send({
         provider: 'azure',
-        credentials: { username: 'john.doe', password: 'Test@123' }
+        credentials: { username: 'john.doe', password: 'Test@123' },
       });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('token');
-    
+
     // Restaura a flag
     featureFlags.setFlag('FF_CIRCUIT_BREAKER', true);
   });
@@ -154,7 +174,7 @@ describe('Azure Authentication Provider', () => {
       .post('/auth/login')
       .send({
         provider: 'azure',
-        credentials: { username: 'service_unavailable', password: 'any' }
+        credentials: { username: 'service_unavailable', password: 'any' },
       });
 
     expect(response.status).toBe(500);
@@ -166,7 +186,7 @@ describe('Azure Authentication Provider', () => {
       .post('/auth/login')
       .send({
         provider: 'azure',
-        credentials: { username: 'timeout_user', password: 'any' }
+        credentials: { username: 'timeout_user', password: 'any' },
       });
 
     expect(response.status).toBe(408);

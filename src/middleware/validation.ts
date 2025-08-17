@@ -8,9 +8,9 @@ export interface ValidationError {
 }
 
 export function formatZodError(error: ZodError): ValidationError[] {
-  return error.issues.map((err) => ({
+  return error.issues.map(err => ({
     field: err.path.join('.') || 'body',
-    message: err.message
+    message: err.message,
   }));
 }
 
@@ -18,21 +18,21 @@ export function validateBody<T>(schema: ZodSchema<T>) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = schema.safeParse(req.body);
-      
+
       if (!result.success) {
         const validationErrors = formatZodError(result.error);
-        
+
         logger.warn({
           event: 'validation_failed',
           path: req.path,
           method: req.method,
-          errors: validationErrors
+          errors: validationErrors,
         });
 
         return res.status(400).json({
           error: 'Dados inválidos',
           message: 'Os dados fornecidos não são válidos',
-          details: validationErrors
+          details: validationErrors,
         });
       }
 
@@ -44,12 +44,12 @@ export function validateBody<T>(schema: ZodSchema<T>) {
         event: 'validation_error',
         path: req.path,
         method: req.method,
-        error: error.message
+        error: error.message,
       });
 
       return res.status(500).json({
         error: 'Erro interno de validação',
-        message: 'Ocorreu um erro interno durante a validação dos dados'
+        message: 'Ocorreu um erro interno durante a validação dos dados',
       });
     }
   };
@@ -59,21 +59,21 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = schema.safeParse(req.query);
-      
+
       if (!result.success) {
         const validationErrors = formatZodError(result.error);
-        
+
         logger.warn({
           event: 'query_validation_failed',
           path: req.path,
           method: req.method,
-          errors: validationErrors
+          errors: validationErrors,
         });
 
         return res.status(400).json({
           error: 'Parâmetros de consulta inválidos',
           message: 'Os parâmetros de consulta fornecidos não são válidos',
-          details: validationErrors
+          details: validationErrors,
         });
       }
 
@@ -84,12 +84,12 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
         event: 'query_validation_error',
         path: req.path,
         method: req.method,
-        error: error.message
+        error: error.message,
       });
 
       return res.status(500).json({
         error: 'Erro interno de validação',
-        message: 'Ocorreu um erro interno durante a validação dos parâmetros'
+        message: 'Ocorreu um erro interno durante a validação dos parâmetros',
       });
     }
   };

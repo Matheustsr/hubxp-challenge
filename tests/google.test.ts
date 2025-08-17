@@ -14,7 +14,10 @@ describe('Autenticação Google', () => {
   it('deve fazer login com token Google válido', async () => {
     const res = await request(app)
       .post('/auth/login')
-      .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });
+      .send({
+        provider: 'google',
+        credentials: { token: 'google_valid_token_123' },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();

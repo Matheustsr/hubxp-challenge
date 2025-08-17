@@ -9,29 +9,29 @@ export const apiRateLimiter = rateLimit({
   max: config.rateLimit.max,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
+  skip: _req => {
     // Se feature flag estiver desabilitada, pula o rate limiting
     return !featureFlags.isEnabled('FF_RATE_LIMITING');
   },
-  handler: (req, res) => {
-    const endpoint = req.route?.path || req.path;
-    
+  handler: (_req, res) => {
+    const endpoint = _req.route?.path || _req.path;
+
     // Incrementar métrica de rate limit rejections
     if (featureFlags.isEnabled('FF_METRICS')) {
       rateLimitRejectionsTotal.inc({ endpoint });
     }
-    
-    logger.warn({ 
-      event: 'rate_limit_exceeded', 
-      ip: req.ip, 
+
+    logger.warn({
+      event: 'rate_limit_exceeded',
+      ip: _req.ip,
       endpoint,
-      userAgent: req.get('user-agent')
+      userAgent: _req.get('user-agent'),
     });
 
     res.status(429).json({
       error: 'too_many_requests',
       message: 'Muitas requisições. Tente novamente mais tarde.',
-      retryAfter: Math.round(config.rateLimit.windowMs / 1000)
+      retryAfter: Math.round(config.rateLimit.windowMs / 1000),
     });
-  }
+  },
 });

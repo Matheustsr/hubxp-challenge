@@ -1,7 +1,11 @@
-import * as jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
+import * as jwt from 'jsonwebtoken';
 import config from '../config';
-import { cacheTokenByJti, getCachedTokenByJti, revokeTokenByJti } from '../infra/redisClient';
+import {
+  cacheTokenByJti,
+  getCachedTokenByJti,
+  revokeTokenByJti,
+} from '../infra/redisClient';
 import { featureFlags } from '../config/featureFlags';
 import { cacheHitTotal } from '../metrics/businessMetrics';
 
@@ -14,15 +18,22 @@ interface JwtPayload {
   exp?: number;
 }
 
-export function signJwt(payload: Omit<JwtPayload, 'jti' | 'iat' | 'exp'>): string {
+export function signJwt(
+  payload: Omit<JwtPayload, 'jti' | 'iat' | 'exp'>
+): string {
   // Validar se o segredo JWT não é o padrão inseguro em produção
-  if (config.jwtSecret === 'alterar-isso-em-prod' && process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET deve ser alterado em produção. Use uma chave segura de pelo menos 256 bits.');
+  if (
+    config.jwtSecret === 'alterar-isso-em-prod' &&
+    process.env.NODE_ENV === 'production'
+  ) {
+    throw new Error(
+      'JWT_SECRET deve ser alterado em produção. Use uma chave segura de pelo menos 256 bits.'
+    );
   }
 
   // Gerar um JTI único para este token
   const jti = randomBytes(16).toString('hex');
-  
+
   // Adicionar claims de segurança
   const enhancedPayload = {
     ...payload,
@@ -32,17 +43,17 @@ export function signJwt(payload: Omit<JwtPayload, 'jti' | 'iat' | 'exp'>): strin
   };
 
   const token = jwt.sign(
-    enhancedPayload, 
-    config.jwtSecret as string, 
-    { 
+    enhancedPayload,
+    config.jwtSecret as string,
+    {
       expiresIn: config.jwtExpiresIn,
-      algorithm: 'HS256' // Explicitamente definir o algoritmo
+      algorithm: 'HS256', // Explicitamente definir o algoritmo
     } as jwt.SignOptions
   );
 
   // Cache usando JTI ao invés do token completo
   cacheTokenByJti(jti, enhancedPayload, 15 * 60).catch(() => {});
-  
+
   return token;
 }
 
@@ -51,7 +62,7 @@ export function verifyJwt(token: string): JwtPayload {
     const decoded = jwt.verify(token, config.jwtSecret as string, {
       algorithms: ['HS256'], // Permitir apenas HS256
       issuer: 'hubxp-auth',
-      audience: 'hubxp-api'
+      audience: 'hubxp-api',
     }) as JwtPayload;
 
     return decoded;
@@ -69,7 +80,7 @@ export function verifyJwt(token: string): JwtPayload {
 
 export async function verifyJwtWithCache(token: string): Promise<JwtPayload> {
   const decoded = verifyJwt(token);
-  
+
   if (!decoded.jti) {
     throw new Error('Token sem JTI - token inválido');
   }
@@ -81,20 +92,20 @@ export async function verifyJwtWithCache(token: string): Promise<JwtPayload> {
 
   // Verificar se o token foi revogado
   const cachedPayload = await getCachedTokenByJti(decoded.jti);
-  
+
   if (cachedPayload === null) {
     // Cache miss
     if (featureFlags.isEnabled('FF_METRICS')) {
       cacheHitTotal.inc({ type: 'token_validation', status: 'miss' });
     }
-    
+
     // Token não está no cache, pode ter sido revogado ou expirado
     // Verificar se o token ainda é válido temporalmente
     const now = Math.floor(Date.now() / 1000);
     if (decoded.exp && decoded.exp < now) {
       throw new Error('Token expirado');
     }
-    
+
     // Recriar cache se o token ainda é válido
     await cacheTokenByJti(decoded.jti, decoded, 15 * 60);
   } else if (cachedPayload === 'REVOKED') {

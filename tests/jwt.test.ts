@@ -17,7 +17,7 @@ jest.mock('../src/config', () => ({
       host: 'localhost',
       port: 6379,
       username: undefined,
-      password: undefined
+      password: undefined,
     },
     rateLimit: {
       windowMs: 15 * 60 * 1000,
@@ -33,7 +33,7 @@ jest.mock('../src/config', () => ({
       jwtAlgorithm: 'HS256',
       tokenCacheTtl: 15 * 60,
     },
-  }
+  },
 }));
 
 // Mock do Redis Client para evitar dependência externa nos testes
@@ -68,9 +68,9 @@ jest.mock('../src/services/jwt.service', () => {
   const { randomBytes } = require('crypto');
   const jwt = require('jsonwebtoken');
   const TEST_SECRET = randomBytes(32).toString('hex');
-  
+
   const cache = new Map();
-  
+
   return {
     signJwt: jest.fn((payload: any) => {
       const jti = randomBytes(16).toString('hex');
@@ -80,24 +80,24 @@ jest.mock('../src/services/jwt.service', () => {
         iss: 'hubxp-auth',
         aud: 'hubxp-api',
       };
-      
+
       const token = jwt.sign(enhancedPayload, TEST_SECRET, {
         expiresIn: '15m',
-        algorithm: 'HS256'
+        algorithm: 'HS256',
       });
-      
+
       // Simular cache
       cache.set(`jti:${jti}`, JSON.stringify(enhancedPayload));
-      
+
       return token;
     }),
-    
+
     verifyJwt: jest.fn((token: string) => {
       try {
         return jwt.verify(token, TEST_SECRET, {
           algorithms: ['HS256'],
           issuer: 'hubxp-auth',
-          audience: 'hubxp-api'
+          audience: 'hubxp-api',
         });
       } catch (err: any) {
         if (err.name === 'TokenExpiredError') {
@@ -108,34 +108,39 @@ jest.mock('../src/services/jwt.service', () => {
         throw new Error('Falha na verificação do token');
       }
     }),
-    
+
     verifyJwtWithCache: jest.fn(async (token: string) => {
       const decoded = jwt.verify(token, TEST_SECRET);
-      
+
       // Verificar se o token foi revogado
       const jti = decoded.jti;
       if (jti && cache.get(`jti:${jti}`) === 'REVOKED') {
         throw new Error('Token foi revogado');
       }
-      
+
       return decoded;
     }),
-    
+
     revokeToken: jest.fn(async (token: string) => {
       const decoded = jwt.verify(token, TEST_SECRET);
       if (decoded.jti) {
         cache.set(`jti:${decoded.jti}`, 'REVOKED');
       }
     }),
-    
-    generateSecureSecret: jest.fn(() => randomBytes(32).toString('hex'))
+
+    generateSecureSecret: jest.fn(() => randomBytes(32).toString('hex')),
   };
 });
 
-import { signJwt, verifyJwt, verifyJwtWithCache, revokeToken, generateSecureSecret } from '../src/services/jwt.service';
+import {
+  signJwt,
+  verifyJwt,
+  verifyJwtWithCache,
+  revokeToken,
+  generateSecureSecret,
+} from '../src/services/jwt.service';
 
 describe('Serviço JWT', () => {
-
   it('deve assinar e verificar tokens JWT', () => {
     const payload = { sub: 'test-user', provider: 'google', role: 'user' };
     const token = signJwt(payload);
@@ -177,8 +182,16 @@ describe('Serviço JWT', () => {
   });
 
   it('deve lidar com diferentes tipos de usuário', () => {
-    const adminPayload = { sub: 'admin-user', provider: 'azure', role: 'admin' };
-    const userPayload = { sub: 'regular-user', provider: 'google', role: 'user' };
+    const adminPayload = {
+      sub: 'admin-user',
+      provider: 'azure',
+      role: 'admin',
+    };
+    const userPayload = {
+      sub: 'regular-user',
+      provider: 'google',
+      role: 'user',
+    };
 
     const adminToken = signJwt(adminPayload);
     const userToken = signJwt(userPayload);
@@ -224,7 +237,9 @@ describe('Serviço JWT', () => {
     await revokeToken(token);
 
     // Token deve ser inválido após revogação
-    await expect(verifyJwtWithCache(token)).rejects.toThrow('Token foi revogado');
+    await expect(verifyJwtWithCache(token)).rejects.toThrow(
+      'Token foi revogado'
+    );
   });
 
   it('deve gerar segredos seguros', () => {
@@ -232,7 +247,7 @@ describe('Serviço JWT', () => {
     expect(secret).toBeDefined();
     expect(typeof secret).toBe('string');
     expect(secret.length).toBe(64); // 32 bytes = 64 caracteres hex
-    
+
     // Verificar que cada execução gera um segredo diferente
     const secret2 = generateSecureSecret();
     expect(secret).not.toBe(secret2);

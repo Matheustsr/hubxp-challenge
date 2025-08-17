@@ -10,8 +10,8 @@ jest.mock('../src/infra/redisClient', () => ({
   redis: {
     get: jest.fn(),
     set: jest.fn(),
-    disconnect: jest.fn()
-  }
+    disconnect: jest.fn(),
+  },
 }));
 
 describe('Adaptador Sistema Legado', () => {
@@ -36,7 +36,9 @@ describe('Adaptador Sistema Legado', () => {
 
   it('deve implementar idempotência com cache', async () => {
     const { redis } = require('../src/infra/redisClient');
-    redis.get.mockResolvedValueOnce(JSON.stringify({ success: true, result: 'cached' }));
+    redis.get.mockResolvedValueOnce(
+      JSON.stringify({ success: true, result: 'cached' })
+    );
 
     const payload = { operation: 'test' };
     const idempotencyKey = 'test-key-123';
@@ -53,11 +55,13 @@ describe('Adaptador Sistema Legado', () => {
     // Mock com falha inicial 500, depois sucesso
     const error500 = new Error('Server Error');
     (error500 as any).response = { status: 500 };
-    
+
     mockedAxios.post
       .mockRejectedValueOnce(error500)
       .mockRejectedValueOnce(error500)
-      .mockResolvedValueOnce({ data: { success: true, result: 'retry-success' } });
+      .mockResolvedValueOnce({
+        data: { success: true, result: 'retry-success' },
+      });
 
     const payload = { operation: 'test' };
     const result = await callLegacySystem(payload);
@@ -73,7 +77,7 @@ describe('Adaptador Sistema Legado', () => {
     // Mock com erro 400 (Bad Request)
     const error400 = new Error('Bad Request');
     (error400 as any).response = { status: 400 };
-    
+
     mockedAxios.post.mockRejectedValue(error400);
 
     const payload = { operation: 'test' };
@@ -89,10 +93,10 @@ describe('Adaptador Sistema Legado', () => {
     // Mock com erro de rede (sem response)
     const networkError = new Error('Network error');
     // Sem response property = erro de rede
-    
-    mockedAxios.post
-      .mockRejectedValueOnce(networkError)
-      .mockResolvedValueOnce({ data: { success: true, result: 'network-retry-success' } });
+
+    mockedAxios.post.mockRejectedValueOnce(networkError).mockResolvedValueOnce({
+      data: { success: true, result: 'network-retry-success' },
+    });
 
     const payload = { operation: 'test' };
     const result = await callLegacySystem(payload);

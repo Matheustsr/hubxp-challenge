@@ -9,10 +9,10 @@ describe('Utilitário Retry Backoff', () => {
     // Com jitter, os valores não são exatos, mas devem estar na faixa esperada
     expect(delay1).toBeGreaterThan(100); // > 2^1 * 100 = 200
     expect(delay1).toBeLessThan(300); // < 200 + 100 = 300
-    
-    expect(delay2).toBeGreaterThan(300); // > 2^2 * 100 = 400 
+
+    expect(delay2).toBeGreaterThan(300); // > 2^2 * 100 = 400
     expect(delay2).toBeLessThan(500); // < 400 + 100 = 500
-    
+
     expect(delay3).toBeGreaterThan(700); // > 2^3 * 100 = 800
     expect(delay3).toBeLessThan(900); // < 800 + 100 = 900
 

@@ -19,7 +19,10 @@ describe('Rate Limiting e Circuit Breaker', () => {
   it('deve permitir requisições dentro do limite', async () => {
     const res = await request(app)
       .post('/auth/login')
-      .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });
+      .send({
+        provider: 'google',
+        credentials: { token: 'google_valid_token_123' },
+      });
 
     expect(res.status).toBe(200);
   });
@@ -29,8 +32,11 @@ describe('Rate Limiting e Circuit Breaker', () => {
     for (let i = 0; i < 5; i++) {
       const res = await request(app)
         .post('/auth/login')
-        .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });
-      
+        .send({
+          provider: 'google',
+          credentials: { token: 'google_valid_token_123' },
+        });
+
       expect([200, 429]).toContain(res.status); // Aceitar ambos os status
       await new Promise(resolve => setTimeout(resolve, 100)); // Pequeno delay
     }
@@ -48,7 +54,7 @@ describe('Rate Limiting e Circuit Breaker', () => {
     }
 
     const results = await Promise.all(promises);
-    
+
     // Todas devem retornar erro de autenticação
     results.forEach(res => {
       expect(res.status).toBe(401);

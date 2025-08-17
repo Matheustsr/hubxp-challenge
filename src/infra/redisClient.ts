@@ -9,7 +9,11 @@ export const redis = new Redis({
 });
 
 // Funções antigas para compatibilidade (deprecated)
-export async function cacheToken(token: string, payload: object, ttlSeconds = 60 * 15) {
+export async function cacheToken(
+  token: string,
+  payload: object,
+  ttlSeconds = 60 * 15
+) {
   await redis.set(`jwt:${token}`, JSON.stringify(payload), 'EX', ttlSeconds);
 }
 
@@ -19,7 +23,11 @@ export async function getCachedToken(token: string) {
 }
 
 // Novas funções baseadas em JTI para melhor segurança
-export async function cacheTokenByJti(jti: string, payload: object, ttlSeconds = 60 * 15) {
+export async function cacheTokenByJti(
+  jti: string,
+  payload: object,
+  ttlSeconds = 60 * 15
+) {
   await redis.set(`jti:${jti}`, JSON.stringify(payload), 'EX', ttlSeconds);
 }
 
@@ -42,10 +50,9 @@ export async function revokeTokenByJti(jti: string) {
 export async function cleanupExpiredTokens() {
   // Função auxiliar para limpeza de tokens expirados
   // Pode ser chamada por um job schedulado
-  const cursor = '0';
   const pattern = 'jti:*';
   const keys = await redis.keys(pattern);
-  
+
   for (const key of keys) {
     const ttl = await redis.ttl(key);
     if (ttl === -1) {

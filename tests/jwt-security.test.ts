@@ -15,7 +15,7 @@ function signJwtTest(payload: any) {
 
   return jwt.sign(enhancedPayload, TEST_JWT_SECRET, {
     expiresIn: '15m',
-    algorithm: 'HS256'
+    algorithm: 'HS256',
   });
 }
 
@@ -23,7 +23,7 @@ function verifyJwtTest(token: string) {
   return jwt.verify(token, TEST_JWT_SECRET, {
     algorithms: ['HS256'],
     issuer: 'hubxp-auth',
-    audience: 'hubxp-api'
+    audience: 'hubxp-api',
   });
 }
 
@@ -66,7 +66,7 @@ describe('Serviço JWT - Melhorias de Segurança', () => {
     expect(secret).toBeDefined();
     expect(typeof secret).toBe('string');
     expect(secret.length).toBe(64); // 32 bytes = 64 caracteres hex
-    
+
     // Verificar que cada execução gera um segredo diferente
     const secret2 = generateSecureSecretTest();
     expect(secret).not.toBe(secret2);
@@ -85,10 +85,10 @@ describe('Serviço JWT - Melhorias de Segurança', () => {
 
   it('deve falhar com token sem secret adequado', () => {
     const payload = { sub: 'test-user', provider: 'google', role: 'user' };
-    
+
     // Criar token com secret muito fraco
     const weakToken = jwt.sign(payload, 'weak', { algorithm: 'HS256' });
-    
+
     // Verificação com secret correto deve falhar
     expect(() => {
       verifyJwtTest(weakToken);

@@ -1,4 +1,7 @@
-export async function validateAzureCredentials(username: string, password: string) {
+export async function validateAzureCredentials(
+  username: string,
+  password: string
+) {
   await new Promise(r => setTimeout(r, 50)); // latencia do servidor
   if (username === 'john.doe' && password === 'Test@123') {
     return { id: 'azure-john', username, role: 'user', provider: 'azure' };

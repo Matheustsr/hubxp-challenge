@@ -13,8 +13,7 @@ describe('Health e Métricas', () => {
 
   describe('Endpoint de health', () => {
     it('deve retornar status de saúde da aplicação', async () => {
-      const res = await request(app)
-        .get('/health');
+      const res = await request(app).get('/health');
 
       expect(res.status).toBe(200);
       // Aceitar tanto "healthy" quanto "degraded" pois Redis pode não estar rodando nos testes
@@ -26,8 +25,7 @@ describe('Health e Métricas', () => {
 
   describe('Endpoint de métricas', () => {
     it('deve retornar métricas do Prometheus', async () => {
-      const res = await request(app)
-        .get('/metrics');
+      const res = await request(app).get('/metrics');
 
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toContain('text/plain');
@@ -36,8 +34,7 @@ describe('Health e Métricas', () => {
     });
 
     it('deve incluir métricas padrão do Node.js', async () => {
-      const res = await request(app)
-        .get('/metrics');
+      const res = await request(app).get('/metrics');
 
       expect(res.status).toBe(200);
       expect(res.text).toContain('process_cpu');
@@ -47,8 +44,7 @@ describe('Health e Métricas', () => {
 
   describe('Documentação da API', () => {
     it('deve servir interface do Swagger UI', async () => {
-      const res = await request(app)
-        .get('/docs/');
+      const res = await request(app).get('/docs/');
 
       expect(res.status).toBe(200);
       expect(res.text).toContain('swagger-ui');
@@ -59,7 +55,10 @@ describe('Health e Métricas', () => {
     it('deve logar requisições para endpoints de auth', async () => {
       const res = await request(app)
         .post('/auth/login')
-        .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });
+        .send({
+          provider: 'google',
+          credentials: { token: 'google_valid_token_123' },
+        });
 
       expect(res.status).toBe(200);
     }, 30000);
