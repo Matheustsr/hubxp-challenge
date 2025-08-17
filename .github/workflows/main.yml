@@ -145,18 +145,14 @@ jobs:
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
           
-      - name: Test Heroku Authentication
+      - name: Setup Heroku Authentication
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          echo "Testing Heroku authentication..."
-          heroku auth:whoami || echo "Authentication failed"
-          
-      - name: Login to Heroku Container Registry
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          heroku container:login
+          echo "Setting up Heroku authentication..."
+          echo "$HEROKU_API_KEY" | heroku auth:token
+          echo "Testing authentication..."
+          heroku auth:whoami
           
       - name: Configure Heroku app for Container deployment
         env:
@@ -166,16 +162,27 @@ jobs:
           echo "Setting stack to container for Docker deployment..."
           heroku stack:set container --app $HEROKU_APP_NAME
           
+      - name: Login to Heroku Container Registry
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Logging into Heroku Container Registry..."
+          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+          
       - name: Build and Push Docker image
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          heroku container:push web --app $HEROKU_APP_NAME
+          echo "Building Docker image..."
+          docker build -t registry.heroku.com/$HEROKU_APP_NAME/web .
+          echo "Pushing Docker image to Heroku..."
+          docker push registry.heroku.com/$HEROKU_APP_NAME/web
           
       - name: Release to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
+          echo "Releasing container to Heroku..."
           heroku container:release web --app $HEROKU_APP_NAME
