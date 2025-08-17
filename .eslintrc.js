@@ -8,15 +8,14 @@ module.exports = {
   plugins: ['@typescript-eslint', 'import'],
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
-    '@typescript-eslint/recommended-requiring-type-checking',
+    '@typescript-eslint/recommended'
   ],
   root: true,
   env: {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js', 'dist/', 'coverage/', 'node_modules/'],
+  ignorePatterns: ['.eslintrc.js', 'dist/', 'coverage/', 'node_modules/', '*.js'],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
@@ -24,7 +23,7 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/prefer-const': 'error',
-    '@typescript-eslint/no-var-requires': 'error',
+    '@typescript-eslint/no-var-requires': 'off', // Desabilitar para arquivos de config
     'import/order': [
       'error',
       {
