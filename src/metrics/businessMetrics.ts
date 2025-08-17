@@ -1,57 +1,59 @@
-import promClient from 'prom-client';
+import { Counter, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
+export const register = new Registry();
+collectDefaultMetrics({ register });
 
-// Contadores de autenticação
-export const authAttemptsTotal = new promClient.Counter({
+export const authAttemptsTotal = new Counter({
   name: 'auth_attempts_total',
-  help: 'Total number of authentication attempts',
+  help: 'Auth attempts',
   labelNames: ['provider', 'status'],
+  registers: [register],
 });
 
-export const authSuccessTotal = new promClient.Counter({
+export const authSuccessTotal = new Counter({
   name: 'auth_success_total',
-  help: 'Total number of successful authentications',
+  help: 'Auth success',
   labelNames: ['provider'],
+  registers: [register],
 });
 
-export const authFailTotal = new promClient.Counter({
+export const authFailTotal = new Counter({
   name: 'auth_fail_total',
-  help: 'Total number of failed authentications',
+  help: 'Auth fail',
   labelNames: ['provider', 'reason'],
+  registers: [register],
 });
 
-// Cache hits
-export const cacheHitTotal = new promClient.Counter({
-  name: 'cache_hit_total',
-  help: 'Total number of cache hits',
-  labelNames: ['type', 'status'], // type: token_validation, hit/miss
-});
-
-// Gauge para estado dos circuit breakers
-export const circuitBreakerStateGauge = new promClient.Gauge({
-  name: 'circuit_breaker_state',
-  help: 'Circuit breaker state (0=closed, 1=half-open, 2=open)',
-  labelNames: ['service'],
-});
-
-// Rate limiting metrics
-export const rateLimitRejectionsTotal = new promClient.Counter({
-  name: 'rate_limit_rejections_total',
-  help: 'Total number of requests rejected by rate limiter',
-  labelNames: ['endpoint'],
-});
-
-// Token validation metrics
-export const tokenValidationTotal = new promClient.Counter({
+export const tokenValidationTotal = new Counter({
   name: 'token_validation_total',
-  help: 'Total number of token validations',
-  labelNames: ['status'], // valid, invalid, expired
+  help: 'Token validations',
+  labelNames: ['status'],
+  registers: [register],
 });
 
-// Registrar todas as métricas
-promClient.register.registerMetric(authAttemptsTotal);
-promClient.register.registerMetric(authSuccessTotal);
-promClient.register.registerMetric(authFailTotal);
-promClient.register.registerMetric(cacheHitTotal);
-promClient.register.registerMetric(circuitBreakerStateGauge);
-promClient.register.registerMetric(rateLimitRejectionsTotal);
-promClient.register.registerMetric(tokenValidationTotal);
+export const cacheHitTotal = new Counter({
+  name: 'cache_hit_total',
+  help: 'Cache hits',
+  labelNames: ['type', 'status'],
+  registers: [register],
+});
+
+export const cacheMissTotal = new Counter({
+  name: 'cache_miss_total',
+  help: 'Cache miss',
+  labelNames: ['type'],
+  registers: [register],
+});
+
+export const rateLimitRejectionsTotal = new Counter({
+  name: 'rate_limit_rejections_total',
+  help: '429s',
+  labelNames: ['route'],
+  registers: [register],
+});
+
+export const circuitBreakerStateGauge = new Gauge({
+  name: 'circuit_breaker_state',
+  help: '0=closed,1=half_open,2=open',
+  labelNames: ['service'],
+  registers: [register],
+});

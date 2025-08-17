@@ -18,7 +18,7 @@ export const apiRateLimiter = rateLimit({
 
     // Incrementar métrica de rate limit rejections
     if (featureFlags.isEnabled('FF_METRICS')) {
-      rateLimitRejectionsTotal.inc({ endpoint });
+      rateLimitRejectionsTotal.inc({ route: endpoint });
     }
 
     logger.warn({

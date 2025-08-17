@@ -1,90 +1,40 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import helmet from 'helmet';
-import promClient from 'prom-client';
-import swaggerUi from 'swagger-ui-express';
-import openapi from '../openapi.json';
-import { apiRateLimiter } from './middleware/rateLimiter';
-import { logger } from './logs/logger';
-import { login, validate, logout } from './controllers/auth.controller';
-import { validateBody } from './middleware/validation';
-import { LoginRequestSchema } from './schemas/auth.schemas';
-import { redis } from './infra/redisClient';
-import * as legacyAdapter from './services/legacy.adapter';
+import bodyParser from 'body-parser';
 import { featureFlags } from './config/featureFlags';
-// Importar métricas para garantir que sejam registradas
-import './metrics/businessMetrics';
+import {
+  apiRateLimiter,
+  corsMiddleware,
+  globalErrorHandler,
+  notFoundHandler,
+} from './middleware';
+import { setupRoutes } from './routes';
 
 const app = express();
-app.set('trust proxy', 1); // para o rate limit identificar IPs corretamente.
 
+// behind proxy/load balancer (Heroku/ELB), habilita IP correto p/ rate limit
+app.set('trust proxy', 1);
+
+// segurança básica + CORS configurado via middleware
 app.use(helmet());
-app.use(bodyParser.json());
+app.use(corsMiddleware);
 
-app.use((req, res, next) => {
-  logger.info({ method: req.method, url: req.url });
-  next();
-});
+// parsing e limites (evita payloads gigantes)
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(bodyParser.urlencoded({ extended: false }));
 
-// rate limiting
-app.use(apiRateLimiter);
+// rate limiting (feature-flag)
+if (featureFlags.isEnabled('FF_RATE_LIMITING')) {
+  app.use(apiRateLimiter);
+}
 
-// Rotas de autenticação com validação
-app.post('/auth/login', validateBody(LoginRequestSchema), login);
-app.get('/auth/validate', validate);
-app.post('/auth/logout', logout);
+// Configurar todas as rotas
+setupRoutes(app);
 
-// Health check completo
-app.get('/health', async (req, res) => {
-  try {
-    // Check Redis connectivity
-    const redisPong = await redis.ping().catch(() => null);
-    const redisHealthy = !!redisPong;
+// Middleware para rotas não encontradas (404)
+app.use(notFoundHandler);
 
-    // Checa se o sistema legado está disponível
-    let legacyHealthy = true;
-    try {
-      // Verifica se o módulo do sistema legado está carregado e disponível
-      // Para uma verificação mais robusta, você pode implementar uma função específica
-      // no legacy.adapter.ts que faça um ping/health check real do sistema legado
-      if (legacyAdapter) {
-        legacyHealthy = true; // Sistema legado está disponível (módulo carregado)
-      } else {
-        legacyHealthy = false;
-      }
-    } catch (error) {
-      legacyHealthy = false;
-    }
-
-    const overallStatus = redisHealthy && legacyHealthy ? 'ok' : 'degraded';
-
-    res.json({
-      status: overallStatus,
-      redis: redisHealthy,
-      legacy: legacyHealthy,
-      feature_flags: featureFlags.getAll(),
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    logger.error('Erro no health check:');
-    res.status(503).json({
-      status: 'error',
-      redis: false,
-      legacy: false,
-      feature_flags: featureFlags.getAll(),
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
-
-// metricas
-const collectDefaultMetrics = promClient.collectDefaultMetrics;
-collectDefaultMetrics();
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', promClient.register.contentType);
-  res.end(await promClient.register.metrics());
-});
-
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
+// Middleware global de tratamento de erros (deve ser o último)
+app.use(globalErrorHandler);
 
 export default app;
