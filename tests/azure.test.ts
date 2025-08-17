@@ -7,14 +7,14 @@ import * as providerAzure from '../src/services/providerAzure.service';
 jest.mock('../src/services/providerAzure.service');
 const mockedProviderAzure = providerAzure as jest.Mocked<typeof providerAzure>;
 
-describe('Azure Authentication Provider', () => {
+describe('Autenticação Azure', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('validateAzureCredentials', () => {
-    it('should validate john.doe credentials', async () => {
-      // Usa o serviço real, não o mock, para testar a implementação
+  describe('Validação de credenciais Azure', () => {
+    it('deve validar credenciais do usuário john.doe', async () => {
+      // Utiliza o serviço real para testar a implementação
       jest.unmock('../src/services/providerAzure.service');
       const {
         validateAzureCredentials,
@@ -30,7 +30,7 @@ describe('Azure Authentication Provider', () => {
       });
     });
 
-    it('should validate admin credentials', async () => {
+    it('deve validar credenciais do administrador', async () => {
       jest.unmock('../src/services/providerAzure.service');
       const {
         validateAzureCredentials,
@@ -46,7 +46,7 @@ describe('Azure Authentication Provider', () => {
       });
     });
 
-    it('should throw error for invalid credentials', async () => {
+    it('deve rejeitar credenciais inválidas', async () => {
       jest.unmock('../src/services/providerAzure.service');
       const {
         validateAzureCredentials,
@@ -57,7 +57,7 @@ describe('Azure Authentication Provider', () => {
       ).rejects.toThrow('Invalid username/password');
     });
 
-    it('should throw error for wrong username', async () => {
+    it('deve rejeitar nome de usuário incorreto', async () => {
       jest.unmock('../src/services/providerAzure.service');
       const {
         validateAzureCredentials,
@@ -68,7 +68,7 @@ describe('Azure Authentication Provider', () => {
       ).rejects.toThrow('Invalid username/password');
     });
 
-    it('should throw error for wrong password', async () => {
+    it('deve rejeitar senha incorreta', async () => {
       jest.unmock('../src/services/providerAzure.service');
       const {
         validateAzureCredentials,
@@ -79,7 +79,7 @@ describe('Azure Authentication Provider', () => {
       ).rejects.toThrow('Invalid username/password');
     });
 
-    it('should handle empty credentials', async () => {
+    it('deve tratar credenciais vazias adequadamente', async () => {
       jest.unmock('../src/services/providerAzure.service');
       const {
         validateAzureCredentials,
@@ -91,7 +91,7 @@ describe('Azure Authentication Provider', () => {
     });
   });
 
-  it('should successfully authenticate with valid Azure credentials', async () => {
+  it('deve autenticar com credenciais Azure válidas', async () => {
     const response = await request(app)
       .post('/auth/login')
       .send({
@@ -109,7 +109,7 @@ describe('Azure Authentication Provider', () => {
     });
   });
 
-  it('should authenticate admin user with Azure credentials', async () => {
+  it('deve autenticar usuário administrador com credenciais Azure', async () => {
     const response = await request(app)
       .post('/auth/login')
       .send({
@@ -127,7 +127,7 @@ describe('Azure Authentication Provider', () => {
     });
   });
 
-  it('should reject invalid Azure credentials', async () => {
+  it('deve rejeitar credenciais Azure inválidas', async () => {
     const response = await request(app)
       .post('/auth/login')
       .send({
@@ -139,7 +139,7 @@ describe('Azure Authentication Provider', () => {
     expect(response.body.error).toBe('Invalid credentials');
   });
 
-  it('should validate request body structure for Azure provider', async () => {
+  it('deve validar estrutura do corpo da requisição para provedor Azure', async () => {
     const response = await request(app)
       .post('/auth/login')
       .send({
@@ -151,7 +151,7 @@ describe('Azure Authentication Provider', () => {
     expect(response.body.error).toBe('Validation error');
   });
 
-  it('should handle Azure provider when feature flag is disabled', async () => {
+  it('deve tratar provedor Azure quando feature flag está desabilitada', async () => {
     featureFlags.setFlag('FF_CIRCUIT_BREAKER', false);
 
     const response = await request(app)
@@ -168,7 +168,7 @@ describe('Azure Authentication Provider', () => {
     featureFlags.setFlag('FF_CIRCUIT_BREAKER', true);
   });
 
-  it('should handle Azure service unavailable', async () => {
+  it('deve tratar indisponibilidade do serviço Azure', async () => {
     // Simula um cenário onde o Azure retorna erro de serviço
     const response = await request(app)
       .post('/auth/login')
@@ -180,7 +180,7 @@ describe('Azure Authentication Provider', () => {
     expect(response.status).toBe(500);
   });
 
-  it('should handle Azure authentication timeout', async () => {
+  it('deve tratar timeout de autenticação Azure', async () => {
     // Simula timeout no Azure
     const response = await request(app)
       .post('/auth/login')

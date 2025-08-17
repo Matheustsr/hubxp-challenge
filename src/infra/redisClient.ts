@@ -8,7 +8,7 @@ export const redis = new Redis({
   port: config.redis.port,
 });
 
-// Funções antigas para compatibilidade (deprecated)
+// Funções antigas pra compatibilidade (talvez remover depois)
 export async function cacheToken(
   token: string,
   payload: object,

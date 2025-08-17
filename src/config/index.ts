@@ -1,9 +1,7 @@
 function validateJwtSecret(secret: string): string {
   // Verificar se não é o valor padrão inseguro
   if (secret === 'alterar-isso-em-prod') {
-    console.warn(
-      'JWT_SECRET usando valor padrão inseguro!'
-    );
+    console.warn('JWT_SECRET usando valor padrão inseguro!');
     console.warn(
       '   Por favor, defina uma variável de ambiente JWT_SECRET com pelo menos 256 bits (32 caracteres)'
     );

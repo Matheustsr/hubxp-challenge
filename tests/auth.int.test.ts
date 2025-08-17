@@ -1,8 +1,8 @@
 import request from 'supertest';
 import app from '../src/app';
 
-describe('Auth flows', () => {
-  it('should login with google mock token', async () => {
+describe('Fluxos de autenticação', () => {
+  it('deve realizar login com token Google', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({
@@ -14,7 +14,7 @@ describe('Auth flows', () => {
     expect(res.body.token).toBeDefined();
   });
 
-  it('should reject invalid google token', async () => {
+  it('deve rejeitar token Google inválido', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ provider: 'google', credentials: { token: 'bad' } });

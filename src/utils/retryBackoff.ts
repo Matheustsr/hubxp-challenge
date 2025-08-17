@@ -7,7 +7,7 @@
 // Tentei seguir um padrao de backoff que é comum em sistemas distribuídos
 
 export function backoff(attempt: number, base = 100) {
-  const exp = Math.pow(2, attempt) * base;
-  const jitter = Math.random() * base;
-  return Math.min(exp + jitter, 10000);
+  const delay = Math.pow(2, attempt) * base;
+  const jitter = Math.random() * base; // evita thundering herd - ocorre quando um grande número de processos ou threads simultaneamente tenta acessar o mesmo recurso, levando a um pico de atividade e potencialmente causando gargalos de desempenho no sistema
+  return Math.min(delay + jitter, 10000);
 }

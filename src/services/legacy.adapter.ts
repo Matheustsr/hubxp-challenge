@@ -15,12 +15,12 @@ export async function callLegacySystem(payload: any, idempotencyKey?: string) {
   const url = process.env.LEGACY_URL || 'http://legacy:4000/op';
 
   /*  escolhi 4 porque é um valor razoável para a maioria dos casos de uso, permitindo várias tentativas sem tornar o processo muito lento.
-  * O número de tentativas pode ser ajustado conforme necessário, mas 4 é um bom ponto de partida para lidar com erros transitórios comuns, como problemas de rede ou sobrecarga do servidor.
-  * Isso permite que o sistema se recupere de falhas temporárias sem causar atrasos significativos na resposta do usuário.
-  * Além disso, 4 tentativas é um compromisso entre garantir uma chance razoável de sucesso e evitar que o sistema fique preso em um loop de tentativas excessivas.
-  * Se o sistema legado estiver consistentemente indisponível, é melhor falhar rapidamente e notificar o usuário
-  * do que continuar tentando indefinidamente, o que poderia levar a uma má experiência do
-  */
+   * O número de tentativas pode ser ajustado conforme necessário, mas 4 é um bom ponto de partida para lidar com erros transitórios comuns, como problemas de rede ou sobrecarga do servidor.
+   * Isso permite que o sistema se recupere de falhas temporárias sem causar atrasos significativos na resposta do usuário.
+   * Além disso, 4 tentativas é um compromisso entre garantir uma chance razoável de sucesso e evitar que o sistema fique preso em um loop de tentativas excessivas.
+   * Se o sistema legado estiver consistentemente indisponível, é melhor falhar rapidamente e notificar o usuário
+   * do que continuar tentando indefinidamente, o que poderia levar a uma má experiência do
+   */
   const maxRetries = 4;
   let attempt = 0;
   while (attempt < maxRetries) {
