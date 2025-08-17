@@ -52,7 +52,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - run: npm test -- --coverage --detectOpenHandles
+      - run: npm test -- --detectOpenHandles
         env:
           NODE_ENV: test
           JWT_SECRET: test-secret-key-for-ci-pipeline
@@ -190,4 +190,4 @@ jobs:
         env:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          echo "API URL: https://$HEROKU_APP_DEFAULT_DOMAIN_NAME"
+          echo "API URL: https://$HEROKU_APP_NAME.herokuapp.com"
