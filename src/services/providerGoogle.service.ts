@@ -10,7 +10,7 @@ export async function validateGoogleToken(token: string) {
     };
   }
 
-  // vamos simular uma latencia 
+  // latencia 
   await new Promise(r => setTimeout(r, 50));
   throw new Error('Invalid Google token');
 }

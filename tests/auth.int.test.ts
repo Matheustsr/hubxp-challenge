@@ -7,7 +7,7 @@ describe('Auth flows', () => {
     try {
       await redis.disconnect();
     } catch (error) {
-      // Ignore connection errors during cleanup
+      // Vamos ignorar erros de conexão durante a limpeza
     }
   }, 10000);
 

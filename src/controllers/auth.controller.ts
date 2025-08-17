@@ -31,7 +31,6 @@ export async function login(req: Request, res: Response) {
       return res.status(400).json({ error: 'unsupported provider' });
     }
 
-    // Simple payload - include provider and role
     const payload = { sub: user.id || user.username, provider: user.provider, role: user.role || 'user' };
     const token = signJwt(payload);
 
@@ -55,7 +54,6 @@ export async function validate(req: Request, res: Response) {
   }
   const token = auth.slice(7);
 
-  // Fast path: check Redis cache
   const cached = await getCachedToken(token);
   if (cached) {
     return res.json({ valid: true, payload: cached });
