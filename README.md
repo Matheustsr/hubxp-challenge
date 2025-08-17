@@ -110,12 +110,17 @@ curl -X GET http://localhost:3000/auth/validate \
 Resposta:
 ```json
 {
-  "valid": true,
-  "payload": {
-    "sub": "azure-john",
-    "provider": "azure",
-    "role": "user"
-  }
+    "valid": true,
+    "payload": {
+        "sub": "azure-john",
+        "provider": "azure",
+        "role": "user",
+        "jti": "939e1c665e6b7a27b71b252a610771a3",
+        "iss": "hubxp-auth",
+        "aud": "hubxp-api",
+        "iat": 1755415265,
+        "exp": 1755416165
+    }
 }
 ```
 
@@ -128,11 +133,19 @@ curl http://localhost:3000/health
 Resposta:
 ```json
 {
-  "status": "ok"
+    "status": "ok",
+    "redis": true,
+    "feature_flags": {
+        "rate_limiting": true,
+        "metrics": true,
+        "circuit_breaker": true,
+        "cache_token": true
+    },
+    "timestamp": "2025-08-17T07:33:22.778Z"
 }
 ```
 
-## Estrutura do Projeto
+## Estrutura do Projeto(outdated)
 
 ```
 src/
@@ -154,6 +167,7 @@ src/
 - **Redis** - Cache de tokens
 - **JWT** - Autenticação
 - **Helmet** - Segurança
+- **Zod** - Blindagem da API
 - **Pino** - Logging estruturado
 - **Prometheus** - Métricas
 - **Swagger UI** - Documentação da API
