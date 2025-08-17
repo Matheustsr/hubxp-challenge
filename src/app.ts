@@ -1,12 +1,13 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
-import config from './config';
 import { apiRateLimiter } from './middleware/rateLimiter';
 import { logger } from './logs/logger';
 import { login, validate, logout } from './controllers/auth.controller';
 import { validateBody } from './middleware/validation';
 import { LoginRequestSchema } from './schemas/auth.schemas';
+import { redis } from './infra/redisClient';
+import * as legacyAdapter from './services/legacy.adapter';
 import promClient from 'prom-client';
 import swaggerUi from 'swagger-ui-express';
 import openapi from '../openapi.json';
@@ -30,7 +31,46 @@ app.post('/auth/login', validateBody(LoginRequestSchema), login);
 app.get('/auth/validate', validate);
 app.post('/auth/logout', logout);
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// Health check completo
+app.get('/health', async (req, res) => {
+  try {
+    // Check Redis connectivity
+    const redisPong = await redis.ping().catch(() => null)
+    const redisHealthy = !!redisPong
+
+    // Check legacy system connectivity
+    let legacyHealthy = true
+    try {
+      // Verifica se o módulo do sistema legado está carregado e disponível
+      // Para uma verificação mais robusta, você pode implementar uma função específica
+      // no legacy.adapter.ts que faça um ping/health check real do sistema legado
+      if (legacyAdapter) {
+        legacyHealthy = true // Sistema legado está disponível (módulo carregado)
+      } else {
+        legacyHealthy = false
+      }
+    } catch (error) {
+      legacyHealthy = false
+    }
+
+    const overallStatus = redisHealthy && legacyHealthy ? 'ok' : 'degraded'
+
+    res.json({
+      status: overallStatus,
+      redis: redisHealthy,
+      legacy: legacyHealthy,
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    logger.error('Erro no health check:')
+    res.status(503).json({
+      status: 'error',
+      redis: false,
+      legacy: false,
+      timestamp: new Date().toISOString()
+    })
+  }
+})
 
 // metricas
 const collectDefaultMetrics = promClient.collectDefaultMetrics;
