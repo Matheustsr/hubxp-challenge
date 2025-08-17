@@ -5,6 +5,13 @@ import { signJwt, verifyJwtWithCache, revokeToken } from '../services/jwt.servic
 import { getCachedToken } from '../infra/redisClient';
 import { createBreaker } from '../middleware/circuitBreaker';
 import { logger } from '../logs/logger';
+import { 
+  LoginRequest, 
+  GoogleLoginSchema, 
+  AzureLoginSchema,
+  GoogleLogin,
+  AzureLogin 
+} from '../schemas/auth.schemas';
 
 const googleBreaker = createBreaker(validateGoogleToken, 'google');
 const azureBreaker = createBreaker(validateAzureCredentials, 'azure');
@@ -14,21 +21,26 @@ const azureBreaker = createBreaker(validateAzureCredentials, 'azure');
  * Body: { provider: 'google' | 'azure', credentials: { token } | { username, password } }
  */
 export async function login(req: Request, res: Response) {
-  const { provider, credentials } = req.body;
-  if (!provider || !credentials) {
-    return res.status(400).json({ error: 'provider and credentials required' });
-  }
+  // A validação já foi feita pelo middleware de validação
+  const { provider, credentials } = req.body as LoginRequest;
 
   try {
     let user;
     if (provider === 'google') {
-      // credentials: { token }
-      user = await googleBreaker.fire(credentials.token);
+      // Validação específica para Google
+      const googleData = GoogleLoginSchema.parse({ provider, credentials });
+      user = await googleBreaker.fire(googleData.credentials.token);
     } else if (provider === 'azure') {
-      // credentials: { username, password }
-      user = await azureBreaker.fire(credentials.username, credentials.password);
+      // Validação específica para Azure
+      const azureData = AzureLoginSchema.parse({ provider, credentials });
+      user = await azureBreaker.fire(azureData.credentials.username, azureData.credentials.password);
     } else {
-      return res.status(400).json({ error: 'unsupported provider' });
+      // Este caso não deveria acontecer devido à validação do middleware
+      return res.status(400).json({ 
+        error: 'provider_not_supported',
+        message: 'Provider não suportado',
+        details: [{ field: 'provider', message: 'Provider deve ser "google" ou "azure"' }]
+      });
     }
 
     const payload = { 
@@ -43,11 +55,17 @@ export async function login(req: Request, res: Response) {
       return res.json({ token });
     } catch (jwtError: any) {
       logger.error({ event: 'jwt_generation_failed', provider, error: jwtError.message });
-      return res.status(500).json({ error: 'token_generation_failed' });
+      return res.status(500).json({ 
+        error: 'token_generation_failed',
+        message: 'Falha na geração do token de acesso'
+      });
     }
   } catch (err: any) {
     logger.warn({ event: 'login_failed', provider, reason: err.message });
-    return res.status(401).json({ error: 'invalid_credentials' });
+    return res.status(401).json({ 
+      error: 'invalid_credentials',
+      message: 'Credenciais inválidas'
+    });
   }
 }
 
@@ -58,7 +76,11 @@ export async function login(req: Request, res: Response) {
 export async function validate(req: Request, res: Response) {
   const auth = req.header('authorization');
   if (!auth || !auth.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'missing_token' });
+    return res.status(401).json({ 
+      error: 'missing_token',
+      message: 'Token de autorização ausente ou inválido',
+      details: [{ field: 'authorization', message: 'Header Authorization com Bearer token é obrigatório' }]
+    });
   }
   const token = auth.slice(7);
 
@@ -68,7 +90,11 @@ export async function validate(req: Request, res: Response) {
     return res.json({ valid: true, payload });
   } catch (err: any) {
     logger.debug({ event: 'token_validation_failed', reason: err.message });
-    return res.status(401).json({ valid: false, error: err.message });
+    return res.status(401).json({ 
+      valid: false, 
+      error: 'invalid_token',
+      message: 'Token inválido ou expirado'
+    });
   }
 }
 
@@ -80,7 +106,11 @@ export async function validate(req: Request, res: Response) {
 export async function logout(req: Request, res: Response) {
   const auth = req.header('authorization');
   if (!auth || !auth.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'missing_token' });
+    return res.status(401).json({ 
+      error: 'missing_token',
+      message: 'Token de autorização ausente ou inválido',
+      details: [{ field: 'authorization', message: 'Header Authorization com Bearer token é obrigatório' }]
+    });
   }
   const token = auth.slice(7);
 
@@ -90,6 +120,9 @@ export async function logout(req: Request, res: Response) {
     return res.json({ message: 'Token revogado com sucesso' });
   } catch (err: any) {
     logger.warn({ event: 'logout_failed', reason: err.message });
-    return res.status(400).json({ error: 'revocation_failed' });
+    return res.status(400).json({ 
+      error: 'revocation_failed',
+      message: 'Falha ao revogar o token'
+    });
   }
 }

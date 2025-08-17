@@ -13,8 +13,8 @@ interface JwtPayload {
 }
 
 export function signJwt(payload: Omit<JwtPayload, 'jti' | 'iat' | 'exp'>): string {
-  // Validar se o segredo JWT não é o padrão inseguro
-  if (config.jwtSecret === 'alterar-isso-em-prod') {
+  // Validar se o segredo JWT não é o padrão inseguro em produção
+  if (config.jwtSecret === 'alterar-isso-em-prod' && process.env.NODE_ENV === 'production') {
     throw new Error('JWT_SECRET deve ser alterado em produção. Use uma chave segura de pelo menos 256 bits.');
   }
 
