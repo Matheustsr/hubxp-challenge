@@ -173,6 +173,10 @@ jobs:
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           
+          # Unshallow the repository (GitHub Actions creates shallow clones by default)
+          echo "Making repository unshallow for Heroku..."
+          git fetch --all --unshallow
+          
           # Remove existing heroku remote if it exists
           git remote remove heroku 2>/dev/null || true
           
