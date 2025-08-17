@@ -3,7 +3,10 @@ import { logger } from '../logs/logger';
 import { redis } from '../infra/redisClient';
 import { backoff } from '../utils/retryBackoff';
 
-export async function callLegacySystem(payload: unknown, idempotencyKey?: string) {
+export async function callLegacySystem(
+  payload: unknown,
+  idempotencyKey?: string
+) {
   if (idempotencyKey) {
     const cached = await redis.get(`idem:${idempotencyKey}`);
     if (cached) {
@@ -24,7 +27,7 @@ export async function callLegacySystem(payload: unknown, idempotencyKey?: string
   const maxRetries = 4;
   let attempt = 0;
   let lastError: Error | undefined;
-  
+
   while (attempt < maxRetries) {
     try {
       attempt++;
@@ -64,7 +67,7 @@ export async function callLegacySystem(payload: unknown, idempotencyKey?: string
       await new Promise(r => setTimeout(r, waitMs));
     }
   }
-  
+
   // Se chegou aqui, esgotou tentativas sem sucesso
   throw lastError || new Error('Max retries exceeded');
 }

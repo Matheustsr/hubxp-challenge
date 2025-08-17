@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../src/app';
 
 describe('Rate Limiting e Circuit Breaker', () => {
-
   beforeEach(async () => {
     // Aguardar reset do rate limiter
     await new Promise(resolve => setTimeout(resolve, 1000));

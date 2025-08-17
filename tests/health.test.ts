@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../src/app';
 
 describe('Health e Métricas', () => {
-
   describe('Endpoint de health', () => {
     it('deve retornar status de saúde da aplicação', async () => {
       const res = await request(app).get('/health');

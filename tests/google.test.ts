@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../src/app';
 
 describe('Autenticação Google', () => {
-
   it('deve fazer login com token Google válido', async () => {
     const res = await request(app)
       .post('/auth/login')

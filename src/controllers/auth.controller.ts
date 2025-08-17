@@ -52,14 +52,16 @@ export async function login(req: Request, res: Response) {
     if (provider === 'google') {
       // Validação específica para Google
       const googleData = GoogleLoginSchema.parse({ provider, credentials });
-      user = await googleBreaker.fire(googleData.credentials.token) as AuthenticatedUser;
+      user = (await googleBreaker.fire(
+        googleData.credentials.token
+      )) as AuthenticatedUser;
     } else if (provider === 'azure') {
       // Validação específica para Azure
       const azureData = AzureLoginSchema.parse({ provider, credentials });
-      user = await azureBreaker.fire(
+      user = (await azureBreaker.fire(
         azureData.credentials.username,
         azureData.credentials.password
-      ) as AuthenticatedUser;
+      )) as AuthenticatedUser;
     } else {
       // Este caso não deveria acontecer devido à validação do middleware
       if (featureFlags.isEnabled('FF_METRICS')) {
@@ -116,7 +118,11 @@ export async function login(req: Request, res: Response) {
       authAttemptsTotal.inc({ provider, status: 'failed' });
     }
 
-    logger.warn({ event: 'login_failed', provider, reason: (err as Error).message });
+    logger.warn({
+      event: 'login_failed',
+      provider,
+      reason: (err as Error).message,
+    });
     return res.status(401).json({
       error: 'invalid_credentials',
       message: 'Credenciais inválidas',

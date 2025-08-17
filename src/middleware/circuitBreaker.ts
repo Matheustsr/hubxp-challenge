@@ -97,7 +97,7 @@ export function createBreaker<TArgs extends unknown[], TReturn>(
 
 // Função para resetar todos os circuit breakers
 export function resetCircuitBreakers() {
-  circuitBreakers.forEach((breaker) => {
+  circuitBreakers.forEach(breaker => {
     try {
       if (breaker.opened) {
         breaker.close?.();

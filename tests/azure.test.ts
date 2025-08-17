@@ -6,7 +6,9 @@ describe('Autenticação Azure', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset circuit breakers antes de cada teste
-    const { resetCircuitBreakers } = require('../src/middleware/circuitBreaker');
+    const {
+      resetCircuitBreakers,
+    } = require('../src/middleware/circuitBreaker');
     if (resetCircuitBreakers) {
       resetCircuitBreakers();
     }
