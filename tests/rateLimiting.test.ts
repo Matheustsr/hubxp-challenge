@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../src/app';
 import { redis } from '../src/infra/redisClient';
 
-describe('Rate Limiting and Circuit Breaker', () => {
+describe('Rate Limiting e Circuit Breaker', () => {
   afterAll(async () => {
     try {
       await redis.disconnect();
@@ -16,7 +16,7 @@ describe('Rate Limiting and Circuit Breaker', () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
   });
 
-  it('should allow requests within rate limit', async () => {
+  it('deve permitir requisições dentro do limite', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });
@@ -24,7 +24,7 @@ describe('Rate Limiting and Circuit Breaker', () => {
     expect(res.status).toBe(200);
   });
 
-  it('should allow reasonable request rate', async () => {
+  it('deve permitir taxa razoável de requisições', async () => {
     // Fazer algumas requisições em sequência com delay
     for (let i = 0; i < 5; i++) {
       const res = await request(app)
@@ -36,7 +36,7 @@ describe('Rate Limiting and Circuit Breaker', () => {
     }
   });
 
-  it('should trigger circuit breaker with invalid tokens', async () => {
+  it('deve ativar circuit breaker com tokens inválidos', async () => {
     // Fazer muitas requisições com tokens inválidos para abrir o circuit breaker
     const promises: Promise<request.Response>[] = [];
     for (let i = 0; i < 10; i++) {
@@ -55,7 +55,7 @@ describe('Rate Limiting and Circuit Breaker', () => {
     });
   }, 15000);
 
-  it('should reject unsupported provider', async () => {
+  it('deve rejeitar provider não suportado', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ provider: 'facebook', credentials: { token: 'some_token' } });
@@ -64,7 +64,7 @@ describe('Rate Limiting and Circuit Breaker', () => {
     expect(res.body.error).toBe('unsupported provider');
   });
 
-  it('should reject missing provider', async () => {
+  it('deve rejeitar quando provider está ausente', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ credentials: { token: 'some_token' } });
@@ -73,7 +73,7 @@ describe('Rate Limiting and Circuit Breaker', () => {
     expect(res.body.error).toBe('provider and credentials required');
   });
 
-  it('should reject missing credentials', async () => {
+  it('deve rejeitar quando credentials estão ausentes', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ provider: 'google' });

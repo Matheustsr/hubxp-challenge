@@ -1,7 +1,7 @@
 import { backoff } from '../src/utils/retryBackoff';
 
-describe('Retry Backoff Utility', () => {
-  it('should return increasing delays for each attempt', () => {
+describe('Utilitário Retry Backoff', () => {
+  it('deve retornar delays crescentes para cada tentativa', () => {
     const delay1 = backoff(1, 100);
     const delay2 = backoff(2, 100);
     const delay3 = backoff(3, 100);
@@ -21,7 +21,7 @@ describe('Retry Backoff Utility', () => {
     expect(delay3).toBeGreaterThan(delay2);
   });
 
-  it('should cap at maximum delay', () => {
+  it('deve limitar no delay máximo', () => {
     const delay10 = backoff(10, 100);
     const delay15 = backoff(15, 100);
 
@@ -30,20 +30,20 @@ describe('Retry Backoff Utility', () => {
     expect(delay15).toBeLessThanOrEqual(10000);
   });
 
-  it('should handle attempt 0', () => {
+  it('deve lidar com tentativa 0', () => {
     const delay0 = backoff(0, 100);
     // 2^0 * 100 + jitter = 100 + jitter (0-100)
     expect(delay0).toBeGreaterThanOrEqual(100);
     expect(delay0).toBeLessThan(200);
   });
 
-  it('should use default base when not provided', () => {
+  it('deve usar base padrão quando não fornecida', () => {
     const delay1 = backoff(1); // Base padrão = 100
     expect(delay1).toBeGreaterThan(100);
     expect(delay1).toBeLessThan(300);
   });
 
-  it('should handle different base values', () => {
+  it('deve lidar com diferentes valores de base', () => {
     const delay1Base200 = backoff(1, 200);
     const delay1Base50 = backoff(1, 50);
 

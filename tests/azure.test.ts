@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../src/app';
 import { redis } from '../src/infra/redisClient';
 
-describe('Azure Authentication', () => {
+describe('Autenticação Azure', () => {
   afterAll(async () => {
     try {
       await redis.disconnect();
@@ -11,7 +11,7 @@ describe('Azure Authentication', () => {
     }
   }, 10000);
 
-  it('should login with valid Azure credentials (user)', async () => {
+  it('deve fazer login com credenciais Azure válidas (usuário)', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ 
@@ -23,7 +23,7 @@ describe('Azure Authentication', () => {
     expect(res.body.token).toBeDefined();
   });
 
-  it('should login with valid Azure credentials (admin)', async () => {
+  it('deve fazer login com credenciais Azure válidas (admin)', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ 
@@ -35,7 +35,7 @@ describe('Azure Authentication', () => {
     expect(res.body.token).toBeDefined();
   });
 
-  it('should reject invalid Azure credentials', async () => {
+  it('deve rejeitar credenciais Azure inválidas', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ 
@@ -47,7 +47,7 @@ describe('Azure Authentication', () => {
     expect(res.body.error).toBe('invalid_credentials');
   });
 
-  it('should reject missing username', async () => {
+  it('deve rejeitar quando username está ausente', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ 
@@ -58,7 +58,7 @@ describe('Azure Authentication', () => {
     expect(res.status).toBe(401);
   });
 
-  it('should reject missing password', async () => {
+  it('deve rejeitar quando password está ausente', async () => {
     const res = await request(app)
       .post('/auth/login')
       .send({ 

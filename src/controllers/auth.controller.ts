@@ -11,7 +11,7 @@ const azureBreaker = createBreaker(validateAzureCredentials, 'azure');
 
 /**
  * POST /auth/login
- * Body: { provider: 'google' | 'azure', credentials: {...} }
+ * Body: { provider: 'google' | 'azure', credentials: { token } | { username, password } }
  */
 export async function login(req: Request, res: Response) {
   const { provider, credentials } = req.body;

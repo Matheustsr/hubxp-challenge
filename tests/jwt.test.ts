@@ -1,7 +1,7 @@
 import { signJwt, verifyJwt } from '../src/services/jwt.service';
 
-describe('JWT Service', () => {
-  it('should sign and verify JWT tokens', () => {
+describe('Serviço JWT', () => {
+  it('deve assinar e verificar tokens JWT', () => {
     const payload = { sub: 'test-user', provider: 'google', role: 'user' };
     const token = signJwt(payload);
 
@@ -14,19 +14,19 @@ describe('JWT Service', () => {
     expect(verified.role).toBe('user');
   });
 
-  it('should throw error for invalid token', () => {
+  it('deve lançar erro para token inválido', () => {
     expect(() => {
       verifyJwt('invalid-token');
     }).toThrow();
   });
 
-  it('should throw error for malformed token', () => {
+  it('deve lançar erro para token mal formatado', () => {
     expect(() => {
       verifyJwt('malformed.token');
     }).toThrow();
   });
 
-  it('should include standard JWT claims', () => {
+  it('deve incluir claims padrão do JWT', () => {
     const payload = { sub: 'test-user', provider: 'google', role: 'admin' };
     const token = signJwt(payload);
     const verified = verifyJwt(token) as any;
@@ -38,7 +38,7 @@ describe('JWT Service', () => {
     expect(verified.exp).toBeGreaterThan(verified.iat);
   });
 
-  it('should handle different user roles', () => {
+  it('deve lidar com diferentes tipos de usuário', () => {
     const adminPayload = { sub: 'admin-user', provider: 'azure', role: 'admin' };
     const userPayload = { sub: 'regular-user', provider: 'google', role: 'user' };
 

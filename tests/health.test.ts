@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../src/app';
 import { redis } from '../src/infra/redisClient';
 
-describe('Health and Metrics', () => {
+describe('Health e Métricas', () => {
   afterAll(async () => {
     try {
       await redis.disconnect();
@@ -11,8 +11,8 @@ describe('Health and Metrics', () => {
     }
   }, 10000);
 
-  describe('Health endpoint', () => {
-    it('should return health status', async () => {
+  describe('Endpoint de health', () => {
+    it('deve retornar status de saúde da aplicação', async () => {
       const res = await request(app)
         .get('/health');
 
@@ -21,8 +21,8 @@ describe('Health and Metrics', () => {
     });
   });
 
-  describe('Metrics endpoint', () => {
-    it('should return Prometheus metrics', async () => {
+  describe('Endpoint de métricas', () => {
+    it('deve retornar métricas do Prometheus', async () => {
       const res = await request(app)
         .get('/metrics');
 
@@ -32,7 +32,7 @@ describe('Health and Metrics', () => {
       expect(res.text).toContain('# TYPE');
     });
 
-    it('should include default Node.js metrics', async () => {
+    it('deve incluir métricas padrão do Node.js', async () => {
       const res = await request(app)
         .get('/metrics');
 
@@ -42,8 +42,8 @@ describe('Health and Metrics', () => {
     });
   });
 
-  describe('API Documentation', () => {
-    it('should serve Swagger UI', async () => {
+  describe('Documentação da API', () => {
+    it('deve servir interface do Swagger UI', async () => {
       const res = await request(app)
         .get('/docs/');
 
@@ -52,16 +52,16 @@ describe('Health and Metrics', () => {
     });
   });
 
-  describe('Request Logging', () => {
-    it('should log requests for health endpoint', async () => {
-      // Test that requests are being logged (by checking they don't fail)
+  describe('Log de requisições', () => {
+    it('deve logar requisições para endpoint de health', async () => {
+      // Testa que as requisições estão sendo logadas
       const res = await request(app)
         .get('/health');
 
       expect(res.status).toBe(200);
     });
 
-    it('should log requests for auth endpoints', async () => {
+    it('deve logar requisições para endpoints de auth', async () => {
       const res = await request(app)
         .post('/auth/login')
         .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });

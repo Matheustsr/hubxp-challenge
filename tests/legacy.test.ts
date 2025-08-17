@@ -5,7 +5,7 @@ import axios from 'axios';
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-// Mock Redis to avoid connection issues
+// Mock Redis para evitar problemas de conexão
 jest.mock('../src/infra/redisClient', () => ({
   redis: {
     get: jest.fn(),
@@ -14,12 +14,12 @@ jest.mock('../src/infra/redisClient', () => ({
   }
 }));
 
-describe('Legacy Adapter', () => {
+describe('Adaptador Sistema Legado', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should call legacy system successfully', async () => {
+  it('deve chamar sistema legado com sucesso', async () => {
     const mockResponse = { data: { success: true, result: 'data' } };
     mockedAxios.post.mockResolvedValueOnce(mockResponse);
 
@@ -34,7 +34,7 @@ describe('Legacy Adapter', () => {
     );
   });
 
-  it('should implement idempotency with cache', async () => {
+  it('deve implementar idempotência com cache', async () => {
     const { redis } = require('../src/infra/redisClient');
     redis.get.mockResolvedValueOnce(JSON.stringify({ success: true, result: 'cached' }));
 
@@ -43,14 +43,14 @@ describe('Legacy Adapter', () => {
 
     const result = await callLegacySystem(payload, idempotencyKey);
     expect(result).toEqual({ success: true, result: 'cached' });
-    expect(mockedAxios.post).not.toHaveBeenCalled(); // Should use cache
+    expect(mockedAxios.post).not.toHaveBeenCalled(); // Deve usar o cache
   });
 
-  it('should retry on failure with exponential backoff', async () => {
+  it('deve fazer retry com backoff exponencial quando há falhas', async () => {
     const { redis } = require('../src/infra/redisClient');
-    redis.get.mockResolvedValue(null); // No cache
+    redis.get.mockResolvedValue(null); // Sem cache
 
-    // Mock primeiro erro, depois sucesso
+    // Mock com falha inicial, depois sucesso
     mockedAxios.post
       .mockRejectedValueOnce(new Error('Network error'))
       .mockRejectedValueOnce(new Error('Network error'))
@@ -63,11 +63,11 @@ describe('Legacy Adapter', () => {
     expect(mockedAxios.post).toHaveBeenCalledTimes(3); // 2 falhas + 1 sucesso
   }, 20000);
 
-  it('should fail after max retries', async () => {
+  it('deve falhar após máximo de tentativas', async () => {
     const { redis } = require('../src/infra/redisClient');
-    redis.get.mockResolvedValue(null); // No cache
+    redis.get.mockResolvedValue(null); // Sem cache
 
-    // Mock sempre falhando
+    // Mock que sempre falha
     mockedAxios.post.mockRejectedValue(new Error('Persistent error'));
 
     const payload = { operation: 'test' };
