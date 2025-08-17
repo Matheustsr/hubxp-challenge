@@ -7,8 +7,8 @@ describe('Health e Métricas', () => {
       const res = await request(app).get('/health');
 
       expect(res.status).toBe(200);
-      // Aceitar tanto "healthy" quanto "degraded" pois Redis pode não estar rodando nos testes
-      expect(res.body.status).toMatch(/^(healthy|degraded)$/);
+      // Aceitar "ok" ou "degraded" conforme implementação no app.ts
+      expect(res.body.status).toMatch(/^(ok|degraded)$/);
       expect(res.body.redis).toBeDefined();
       expect(res.body.feature_flags).toBeDefined();
     }, 15000); // Timeout de 15 segundos
