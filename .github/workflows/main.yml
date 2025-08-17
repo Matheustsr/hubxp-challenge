@@ -140,6 +140,14 @@ jobs:
           echo "✅ All secrets appear to be configured correctly"
           echo "✅ HEROKU_API_KEY length: ${#HEROKU_API_KEY}"
           echo "✅ HEROKU_APP_NAME: $HEROKU_APP_NAME"
+          
+          # Additional validation - check if API key format looks correct
+          if [[ ! "$HEROKU_API_KEY" =~ ^[a-f0-9-]{36}$ ]]; then
+            echo "⚠️  Warning: HEROKU_API_KEY format doesn't match expected pattern"
+            echo "⚠️  Expected format: 36 characters with lowercase letters, numbers, and hyphens"
+          else
+            echo "✅ HEROKU_API_KEY format looks correct"
+          fi
       
       - name: Install Heroku CLI
         run: |
@@ -150,7 +158,7 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "Setting up Heroku authentication..."
-          echo "$HEROKU_API_KEY" | heroku auth:token
+          echo "HEROKU_API_KEY is set and will be used automatically by Heroku CLI"
           echo "Testing authentication..."
           heroku auth:whoami
           
@@ -167,17 +175,15 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "Logging into Heroku Container Registry..."
-          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+          heroku container:login
           
       - name: Build and Push Docker image
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          echo "Building Docker image..."
-          docker build -t registry.heroku.com/$HEROKU_APP_NAME/web .
-          echo "Pushing Docker image to Heroku..."
-          docker push registry.heroku.com/$HEROKU_APP_NAME/web
+          echo "Building and pushing Docker image to Heroku..."
+          heroku container:push web --app $HEROKU_APP_NAME
           
       - name: Release to Heroku
         env:
