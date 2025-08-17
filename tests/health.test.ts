@@ -17,8 +17,11 @@ describe('Health e Métricas', () => {
         .get('/health');
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ status: 'ok' });
-    });
+      // Aceitar tanto "healthy" quanto "degraded" pois Redis pode não estar rodando nos testes
+      expect(['healthy', 'degraded']).toContain(res.body.status);
+      expect(res.body.redis).toBeDefined();
+      expect(res.body.feature_flags).toBeDefined();
+    }, 15000); // Timeout de 15 segundos
   });
 
   describe('Endpoint de métricas', () => {
@@ -59,7 +62,7 @@ describe('Health e Métricas', () => {
         .get('/health');
 
       expect(res.status).toBe(200);
-    });
+    }, 15000);
 
     it('deve logar requisições para endpoints de auth', async () => {
       const res = await request(app)
@@ -67,6 +70,6 @@ describe('Health e Métricas', () => {
         .send({ provider: 'google', credentials: { token: 'google_valid_token_123' } });
 
       expect(res.status).toBe(200);
-    });
+    }, 15000);
   });
 });

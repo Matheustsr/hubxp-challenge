@@ -11,6 +11,9 @@ import * as legacyAdapter from './services/legacy.adapter';
 import promClient from 'prom-client';
 import swaggerUi from 'swagger-ui-express';
 import openapi from '../openapi.json';
+import { featureFlags } from './config/featureFlags';
+// Importar métricas para garantir que sejam registradas
+import './metrics/businessMetrics';
 
 const app = express();
 app.set('trust proxy', 1);  // para o rate limit identificar IPs corretamente.
@@ -59,6 +62,7 @@ app.get('/health', async (req, res) => {
       status: overallStatus,
       redis: redisHealthy,
       legacy: legacyHealthy,
+      featureFlags: featureFlags.getAll(),
       timestamp: new Date().toISOString()
     })
   } catch (error) {
@@ -67,6 +71,7 @@ app.get('/health', async (req, res) => {
       status: 'error',
       redis: false,
       legacy: false,
+      featureFlags: featureFlags.getAll(),
       timestamp: new Date().toISOString()
     })
   }

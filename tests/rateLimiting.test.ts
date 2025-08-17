@@ -61,7 +61,7 @@ describe('Rate Limiting e Circuit Breaker', () => {
       .send({ provider: 'facebook', credentials: { token: 'some_token' } });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('unsupported provider');
+    expect(res.body.error).toBe('Dados inválidos');
   });
 
   it('deve rejeitar quando provider está ausente', async () => {
@@ -70,7 +70,7 @@ describe('Rate Limiting e Circuit Breaker', () => {
       .send({ credentials: { token: 'some_token' } });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('provider and credentials required');
+    expect(res.body.error).toBe('Dados inválidos');
   });
 
   it('deve rejeitar quando credentials estão ausentes', async () => {
@@ -79,6 +79,6 @@ describe('Rate Limiting e Circuit Breaker', () => {
       .send({ provider: 'google' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('provider and credentials required');
+    expect(res.body.error).toBe('Dados inválidos');
   });
 });

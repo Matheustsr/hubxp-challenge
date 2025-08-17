@@ -5,6 +5,13 @@ import { signJwt, verifyJwtWithCache, revokeToken } from '../services/jwt.servic
 import { getCachedToken } from '../infra/redisClient';
 import { createBreaker } from '../middleware/circuitBreaker';
 import { logger } from '../logs/logger';
+import { featureFlags } from '../config/featureFlags';
+import { 
+  authAttemptsTotal, 
+  authSuccessTotal, 
+  authFailTotal,
+  tokenValidationTotal
+} from '../metrics/businessMetrics';
 import { 
   LoginRequest, 
   GoogleLoginSchema, 
@@ -24,6 +31,11 @@ export async function login(req: Request, res: Response) {
   // A validação já foi feita pelo middleware de validação
   const { provider, credentials } = req.body as LoginRequest;
 
+  // Incrementar métrica de tentativas de autenticação
+  if (featureFlags.isEnabled('FF_METRICS')) {
+    authAttemptsTotal.inc({ provider, status: 'attempted' });
+  }
+
   try {
     let user;
     if (provider === 'google') {
@@ -36,6 +48,9 @@ export async function login(req: Request, res: Response) {
       user = await azureBreaker.fire(azureData.credentials.username, azureData.credentials.password);
     } else {
       // Este caso não deveria acontecer devido à validação do middleware
+      if (featureFlags.isEnabled('FF_METRICS')) {
+        authFailTotal.inc({ provider, reason: 'unsupported_provider' });
+      }
       return res.status(400).json({ 
         error: 'provider_not_supported',
         message: 'Provider não suportado',
@@ -51,9 +66,20 @@ export async function login(req: Request, res: Response) {
     
     try {
       const token = signJwt(payload);
+      
+      // Incrementar métricas de sucesso
+      if (featureFlags.isEnabled('FF_METRICS')) {
+        authSuccessTotal.inc({ provider });
+        authAttemptsTotal.inc({ provider, status: 'success' });
+      }
+      
       logger.info({ event: 'login_success', provider, userId: payload.sub });
       return res.json({ token });
     } catch (jwtError: any) {
+      if (featureFlags.isEnabled('FF_METRICS')) {
+        authFailTotal.inc({ provider, reason: 'jwt_generation_failed' });
+      }
+      
       logger.error({ event: 'jwt_generation_failed', provider, error: jwtError.message });
       return res.status(500).json({ 
         error: 'token_generation_failed',
@@ -61,6 +87,12 @@ export async function login(req: Request, res: Response) {
       });
     }
   } catch (err: any) {
+    // Incrementar métricas de falha
+    if (featureFlags.isEnabled('FF_METRICS')) {
+      authFailTotal.inc({ provider, reason: 'invalid_credentials' });
+      authAttemptsTotal.inc({ provider, status: 'failed' });
+    }
+    
     logger.warn({ event: 'login_failed', provider, reason: err.message });
     return res.status(401).json({ 
       error: 'invalid_credentials',
@@ -76,6 +108,10 @@ export async function login(req: Request, res: Response) {
 export async function validate(req: Request, res: Response) {
   const auth = req.header('authorization');
   if (!auth || !auth.startsWith('Bearer ')) {
+    if (featureFlags.isEnabled('FF_METRICS')) {
+      tokenValidationTotal.inc({ status: 'missing_token' });
+    }
+    
     return res.status(401).json({ 
       error: 'missing_token',
       message: 'Token de autorização ausente ou inválido',
@@ -87,8 +123,20 @@ export async function validate(req: Request, res: Response) {
   try {
     // Usar a nova função que verifica cache por JTI e revogação
     const payload = await verifyJwtWithCache(token);
+    
+    if (featureFlags.isEnabled('FF_METRICS')) {
+      tokenValidationTotal.inc({ status: 'valid' });
+    }
+    
     return res.json({ valid: true, payload });
   } catch (err: any) {
+    const isExpired = err.message.includes('expired') || err.message.includes('jwt expired');
+    const status = isExpired ? 'expired' : 'invalid';
+    
+    if (featureFlags.isEnabled('FF_METRICS')) {
+      tokenValidationTotal.inc({ status });
+    }
+    
     logger.debug({ event: 'token_validation_failed', reason: err.message });
     return res.status(401).json({ 
       valid: false, 

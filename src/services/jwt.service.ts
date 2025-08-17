@@ -2,6 +2,8 @@ import * as jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import config from '../config';
 import { cacheTokenByJti, getCachedTokenByJti, revokeTokenByJti } from '../infra/redisClient';
+import { featureFlags } from '../config/featureFlags';
+import { cacheHitTotal } from '../metrics/businessMetrics';
 
 interface JwtPayload {
   sub: string;
@@ -72,9 +74,20 @@ export async function verifyJwtWithCache(token: string): Promise<JwtPayload> {
     throw new Error('Token sem JTI - token inválido');
   }
 
+  // Se cache de token estiver desabilitado, pular verificação de cache
+  if (!featureFlags.isEnabled('FF_CACHE_TOKEN')) {
+    return decoded;
+  }
+
   // Verificar se o token foi revogado
   const cachedPayload = await getCachedTokenByJti(decoded.jti);
+  
   if (cachedPayload === null) {
+    // Cache miss
+    if (featureFlags.isEnabled('FF_METRICS')) {
+      cacheHitTotal.inc({ type: 'token_validation', status: 'miss' });
+    }
+    
     // Token não está no cache, pode ter sido revogado ou expirado
     // Verificar se o token ainda é válido temporalmente
     const now = Math.floor(Date.now() / 1000);
@@ -85,7 +98,16 @@ export async function verifyJwtWithCache(token: string): Promise<JwtPayload> {
     // Recriar cache se o token ainda é válido
     await cacheTokenByJti(decoded.jti, decoded, 15 * 60);
   } else if (cachedPayload === 'REVOKED') {
+    // Cache hit - token revogado
+    if (featureFlags.isEnabled('FF_METRICS')) {
+      cacheHitTotal.inc({ type: 'token_validation', status: 'hit_revoked' });
+    }
     throw new Error('Token foi revogado');
+  } else {
+    // Cache hit - token válido
+    if (featureFlags.isEnabled('FF_METRICS')) {
+      cacheHitTotal.inc({ type: 'token_validation', status: 'hit' });
+    }
   }
 
   return decoded;
