@@ -181,3 +181,10 @@ jobs:
           
           # Push to Heroku (use HEAD:main to ensure we push the current branch to main)
           git push heroku HEAD:main --force
+          
+      - name: Acesse a API
+        env:
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+        run: |
+          APP_URL="https://$HEROKU_APP_NAME.herokuapp.com"
+          echo "API URL: $APP_URL"
