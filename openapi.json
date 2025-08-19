@@ -124,7 +124,25 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "enum": ["provider and credentials required", "unsupported provider"]
+                      "enum": ["provider_not_supported", "token_generation_failed"]
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Provider não suportado"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -141,6 +159,30 @@
                     "error": {
                       "type": "string",
                       "example": "invalid_credentials"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Credenciais inválidas"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - JWT generation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "token_generation_failed"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Falha na geração do token de acesso"
                     }
                   }
                 }
@@ -220,6 +262,106 @@
                     "error": {
                       "type": "string",
                       "enum": ["missing_token", "invalid_token"]
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token inválido ou expirado"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout and revoke JWT token",
+        "description": "Revokes the current JWT token, invalidating it for future use",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+",
+              "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            },
+            "description": "JWT token with Bearer prefix"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token successfully revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Token revogado com sucesso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token revocation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "revocation_failed"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Falha ao revogar o token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is missing or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "missing_token"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token de autorização ausente ou inválido"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -232,7 +374,7 @@
     "/health": {
       "get": {
         "summary": "Health check",
-        "description": "Returns the health status of the service",
+        "description": "Returns the health status of the service including Redis connection and feature flags",
         "responses": {
           "200": {
             "description": "Service is healthy",
@@ -243,7 +385,75 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": ["ok", "degraded"],
                       "example": "ok"
+                    },
+                    "redis": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "feature_flags": {
+                      "type": "object",
+                      "properties": {
+                        "rate_limiting": {
+                          "type": "boolean"
+                        },
+                        "metrics": {
+                          "type": "boolean"
+                        },
+                        "circuit_breaker": {
+                          "type": "boolean"
+                        },
+                        "cache_token": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is degraded or unhealthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["degraded", "error"],
+                      "example": "degraded"
+                    },
+                    "redis": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "feature_flags": {
+                      "type": "object",
+                      "properties": {
+                        "rate_limiting": {
+                          "type": "boolean"
+                        },
+                        "metrics": {
+                          "type": "boolean"
+                        },
+                        "circuit_breaker": {
+                          "type": "boolean"
+                        },
+                        "cache_token": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   }
                 }
@@ -255,15 +465,43 @@
     },
     "/metrics": {
       "get": {
-        "summary": "Grafana metrics",
-        "description": "Returns application metrics in Grafana format",
+        "summary": "Prometheus metrics",
+        "description": "Returns application metrics in Prometheus format (only available when FF_METRICS is enabled)",
         "responses": {
           "200": {
             "description": "Metrics data",
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "example": "# HELP auth_attempts_total Total number of authentication attempts\n# TYPE auth_attempts_total counter\nauth_attempts_total{provider=\"google\",status=\"success\"} 5"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Metrics feature is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "metrics_disabled"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error generating metrics",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "# metrics error"
                 }
               }
             }

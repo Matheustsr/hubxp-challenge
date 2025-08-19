@@ -9,7 +9,9 @@ services:
       - "3000:3000"
     depends_on:
       - redis
+    volumes:
+      - ./node_modules:/usr/src/app/node_modules
   redis:
-    image: redis:7
+    image: redis:latest
     ports:
       - "6379:6379"
